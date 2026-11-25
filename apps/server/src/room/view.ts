@@ -7,7 +7,7 @@ export function viewFor(state: RoomState, viewer: PlayerId): RoomView {
     code: state.code,
     you: viewer,
     hostId: state.hostId,
-    people: state.people.map(({ id, nickname }) => ({ id, nickname })),
+    people: state.people.map(({ id, nickname, connected }) => ({ id, nickname, connected })),
     game: state.game && gameViewFor(state.game, viewer),
   };
 }

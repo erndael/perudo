@@ -1,9 +1,16 @@
 // Thin `ws` adapter: translates messages into Room commands and sends every
 // connected player their latest full view after each command. No game rules here.
+// A closed connection becomes a `disconnect` command; a timer then sends `tick` so
+// time-based rules (Host handover) apply even if nobody does anything.
 import type { WebSocket, WebSocketServer } from "ws";
-import type { ClientMessage, ServerMessage, WireError } from "./protocol.ts";
+import type { ClientMessage, ServerMessage, TransportCommandType, WireError } from "./protocol.ts";
 import type { Registry } from "./registry.ts";
-import type { PlayerId, Room, RoomCommand, RoomView } from "./room/index.ts";
+import { HOST_DISCONNECT_GRACE_MS, type PlayerId, type Room, type RoomCommand, type RoomView } from "./room/index.ts";
+
+/** WebSocket close code: a newer connection (e.g. another tab) took over this Seat. Clients don't retry. */
+export const CLOSE_REPLACED = 4000;
+
+const TRANSPORT_ONLY: ReadonlySet<string> = new Set<TransportCommandType>(["join", "reconnect", "disconnect", "tick"]);
 
 export function attachTransport(wss: WebSocketServer, registry: Registry): void {
   /** room code -> player id -> socket */
@@ -36,21 +43,32 @@ export function attachTransport(wss: WebSocketServer, registry: Registry): void 
         return sendError(ws, { code: "bad-message", message: "Malformed message." });
       }
 
-      if (message.type === "join") {
+      if (message.type === "join" || message.type === "reconnect") {
         if (bound) return sendError(ws, { code: "already-joined", message: "You are already in a Room." });
         const room = registry.get(String(message.code));
         if (!room) return sendError(ws, { code: "room-not-found", message: "This Room doesn't exist." });
-        const { result, views } = room.dispatch({ type: "join", nickname: message.nickname });
+        const { result, views } = room.dispatch(
+          message.type === "join"
+            ? { type: "join", nickname: message.nickname }
+            : { type: "reconnect", token: message.token },
+        );
         if (!result.ok) return sendError(ws, result.error);
-        if (!result.playerId) throw new Error("join succeeded without a player id");
+        if (!result.playerId || !result.reconnectToken) throw new Error(`${message.type} succeeded without a Seat`);
         bound = { room, playerId: result.playerId };
         if (!sockets.has(room.code)) sockets.set(room.code, new Map());
-        sockets.get(room.code)!.set(result.playerId, ws);
-        send(ws, { type: "joined", playerId: result.playerId });
+        const inRoom = sockets.get(room.code)!;
+        // A refresh can reconnect before the old connection closes: the new one takes over.
+        const previous = inRoom.get(result.playerId);
+        inRoom.set(result.playerId, ws);
+        previous?.close(CLOSE_REPLACED, "Your Seat was opened elsewhere.");
+        send(ws, { type: "joined", playerId: result.playerId, reconnectToken: result.reconnectToken });
         return broadcast(room, views);
       }
 
       if (!bound) return sendError(ws, { code: "not-joined", message: "Join a Room first." });
+      if (TRANSPORT_ONLY.has(message.type)) {
+        return sendError(ws, { code: "bad-message", message: "Unknown message." });
+      }
       const command = { ...message, by: bound.playerId } as RoomCommand;
       const { result, views } = bound.room.dispatch(command);
       if (!result.ok) sendError(ws, result.error);
@@ -59,8 +77,14 @@ export function attachTransport(wss: WebSocketServer, registry: Registry): void 
 
     ws.on("close", () => {
       if (!bound) return;
-      const inRoom = sockets.get(bound.room.code);
-      if (inRoom?.get(bound.playerId) === ws) inRoom.delete(bound.playerId);
+      const { room, playerId } = bound;
+      const inRoom = sockets.get(room.code);
+      // Replaced by a newer connection for the same Seat: that one is still connected.
+      if (inRoom?.get(playerId) !== ws) return;
+      inRoom.delete(playerId);
+      broadcast(room, room.dispatch({ type: "disconnect", by: playerId }).views);
+      // If this was the Host, the role may pass on once the grace period is over.
+      setTimeout(() => broadcast(room, room.dispatch({ type: "tick" }).views), HOST_DISCONNECT_GRACE_MS + 100).unref();
     });
   });
 }

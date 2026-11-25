@@ -7,6 +7,11 @@ export type PlayerId = string;
 export interface Person {
   id: PlayerId;
   nickname: string;
+  /** Secret issued on join; presenting it again reclaims this Seat (see `reconnect`). */
+  reconnectToken: string;
+  connected: boolean;
+  /** When they last disconnected (clock ms); null while connected. */
+  disconnectedAt: number | null;
 }
 
 /** Everything the Room knows. Internal: only command handlers and `view.ts` read it. */
@@ -24,6 +29,8 @@ export interface RoomState {
 export interface RoomContext {
   rng: Rng;
   clock: Clock;
+  /** A fresh, unguessable reconnect token. */
+  newToken: () => string;
 }
 
 export type RoomErrorCode =
@@ -32,7 +39,9 @@ export type RoomErrorCode =
   | "not-host"
   | "game-in-progress"
   | "not-enough-players"
-  | "too-many-players";
+  | "too-many-players"
+  | "invalid-token"
+  | "not-connected";
 
 export interface RoomError {
   code: RoomErrorCode;
@@ -41,7 +50,7 @@ export interface RoomError {
 }
 
 export type CommandResult =
-  | { ok: true; playerId?: PlayerId }
+  | { ok: true; playerId?: PlayerId; reconnectToken?: string }
   | { ok: false; error: RoomError };
 
 export function reject(code: RoomErrorCode, message: string): CommandResult {
@@ -53,8 +62,8 @@ export interface RoomView {
   code: string;
   you: PlayerId;
   hostId: PlayerId | null;
-  /** In Seat order. */
-  people: { id: PlayerId; nickname: string }[];
+  /** In Seat order. Disconnected people keep their Seat. */
+  people: { id: PlayerId; nickname: string; connected: boolean }[];
   /** The Game in progress, or null before the first Game. */
   game: GameView | null;
 }

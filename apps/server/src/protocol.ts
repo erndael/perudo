@@ -6,13 +6,18 @@ export type { GameView, PlayerId, RoomView } from "./room/index.ts";
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
+/** Room commands only the transport sends: on connect, on close, and from timers. */
+export type TransportCommandType = "join" | "reconnect" | "disconnect" | "tick";
+
 /**
- * First message on a connection must be `join`. After that, the client sends Room
- * commands without `by`; the transport fills `by` with the connection's player id.
+ * First message on a connection must be `join` (a new Seat) or `reconnect` (reclaim the
+ * Seat a reconnect token was issued for). After that, the client sends Room commands
+ * without `by`; the transport fills `by` with the connection's player id.
  */
 export type ClientMessage =
   | { type: "join"; code: string; nickname: string }
-  | DistributiveOmit<Exclude<RoomCommand, { type: "join" }>, "by">;
+  | { type: "reconnect"; code: string; token: string }
+  | DistributiveOmit<Exclude<RoomCommand, { type: TransportCommandType }>, "by">;
 
 export type TransportErrorCode = "bad-message" | "not-joined" | "already-joined" | "room-not-found";
 
@@ -22,7 +27,8 @@ export interface WireError {
 }
 
 export type ServerMessage =
-  | { type: "joined"; playerId: PlayerId }
+  /** After a join or reconnect. Keep the token (per Room code) to reclaim the Seat later. */
+  | { type: "joined"; playerId: PlayerId; reconnectToken: string }
   /** The full view snapshot for this player; sent after every change. */
   | { type: "view"; view: RoomView }
   /** A command from this connection was rejected; nothing changed. */

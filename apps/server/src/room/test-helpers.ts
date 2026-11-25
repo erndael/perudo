@@ -38,11 +38,18 @@ export function rolls(...faces: Face[]): number[] {
   return faces.map((face) => face - 1);
 }
 
+/** Reconnect tokens `token-1`, `token-2`, ... Tests shouldn't rely on the format. */
+export function countingTokens(): () => string {
+  let n = 0;
+  return () => `token-${++n}`;
+}
+
 export function newRoom(opts: { code?: string; rng?: Rng; clock?: Clock } = {}): Room {
   return createRoom({
     code: opts.code ?? "ABCDEF",
     rng: opts.rng ?? scriptedRng(),
     clock: opts.clock ?? fakeClock(),
+    newToken: countingTokens(),
   });
 }
 

@@ -1,12 +1,28 @@
 // The browser side of the Room connection. Holds the latest full view snapshot
 // from the server; components render from `view` and act through `send`.
+// The reconnect token from the server is kept per Room code in localStorage, so a
+// refresh or a dropped connection puts the player back in their Seat.
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ClientMessage, PlayerId, RoomView, ServerMessage, WireError } from "@perudo/server/protocol";
 
+/** WebSocket close code the server uses when a newer connection (another tab) took this Seat. */
+const REPLACED = 4000;
+const RETRY_MS = 1000;
+
+export type ConnectionStatus =
+  /** Not in the Room: show the nickname form. */
+  | "idle"
+  /** Has a Seat (or a stored token) and is trying to get back to it. */
+  | "reconnecting"
+  | "connected"
+  /** The Seat was taken over by another tab; this one stops. */
+  | "replaced";
+
 export interface RoomConnection {
-  /** Latest snapshot; null until joined. */
+  /** Latest snapshot; null until joined. Kept while reconnecting. */
   view: RoomView | null;
   playerId: PlayerId | null;
+  status: ConnectionStatus;
   /** Last rejection from the server, cleared by the next successful view. */
   error: WireError | null;
   join(nickname: string): void;
@@ -18,36 +34,104 @@ function socketUrl(): string {
   return `${scheme}://${window.location.host}/ws`;
 }
 
+// Storage can be unavailable (private mode, blocked site data): then refresh just asks for a nickname.
+const tokenKey = (code: string) => `perudo:reconnect-token:${code}`;
+const tokens = {
+  load(code: string): string | null {
+    try {
+      return window.localStorage.getItem(tokenKey(code));
+    } catch {
+      return null;
+    }
+  },
+  save(code: string, token: string) {
+    try {
+      window.localStorage.setItem(tokenKey(code), token);
+    } catch {
+      /* not remembered */
+    }
+  },
+  forget(code: string) {
+    try {
+      window.localStorage.removeItem(tokenKey(code));
+    } catch {
+      /* nothing to forget */
+    }
+  },
+};
+
 export function useRoom(code: string): RoomConnection {
   const socket = useRef<WebSocket | null>(null);
+  const connect = useRef<(first: ClientMessage) => void>(() => {});
   const [view, setView] = useState<RoomView | null>(null);
   const [playerId, setPlayerId] = useState<PlayerId | null>(null);
+  const [status, setStatus] = useState<ConnectionStatus>(() => (tokens.load(code) ? "reconnecting" : "idle"));
   const [error, setError] = useState<WireError | null>(null);
 
-  useEffect(() => () => socket.current?.close(), []);
+  useEffect(() => {
+    let disposed = false;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+
+    connect.current = (first) => {
+      clearTimeout(retry);
+      const ws = new WebSocket(socketUrl());
+      const old = socket.current;
+      socket.current = ws;
+      old?.close();
+      let seated = false;
+
+      ws.onopen = () => ws.send(JSON.stringify(first));
+      ws.onmessage = (event) => {
+        const message = JSON.parse(String(event.data)) as ServerMessage;
+        if (message.type === "joined") {
+          seated = true;
+          tokens.save(code, message.reconnectToken);
+          setPlayerId(message.playerId);
+          setStatus("connected");
+        }
+        if (message.type === "view") {
+          setView(message.view);
+          setError(null);
+        }
+        if (message.type === "error") {
+          if (first.type === "reconnect" && !seated) {
+            // The Seat is gone (or the Room is): start over with the nickname form.
+            tokens.forget(code);
+            setView(null);
+            setStatus("idle");
+            if (message.error.code === "invalid-token") return;
+          }
+          setError(message.error);
+        }
+      };
+      ws.onclose = (event) => {
+        if (disposed || socket.current !== ws) return; // replaced by a newer socket, or unmounted
+        socket.current = null;
+        if (event.code === REPLACED) return setStatus("replaced");
+        const token = tokens.load(code);
+        if (!token) return setStatus("idle");
+        setStatus("reconnecting");
+        retry = setTimeout(() => connect.current({ type: "reconnect", code, token }), RETRY_MS);
+      };
+    };
+
+    const token = tokens.load(code);
+    if (token) connect.current({ type: "reconnect", code, token });
+
+    return () => {
+      disposed = true;
+      clearTimeout(retry);
+      const ws = socket.current;
+      socket.current = null;
+      ws?.close();
+    };
+  }, [code]);
 
   const send = useCallback((message: ClientMessage) => {
     socket.current?.send(JSON.stringify(message));
   }, []);
 
-  const join = useCallback(
-    (nickname: string) => {
-      socket.current?.close();
-      const ws = new WebSocket(socketUrl());
-      socket.current = ws;
-      ws.onopen = () => ws.send(JSON.stringify({ type: "join", code, nickname } satisfies ClientMessage));
-      ws.onmessage = (event) => {
-        const message = JSON.parse(String(event.data)) as ServerMessage;
-        if (message.type === "joined") setPlayerId(message.playerId);
-        if (message.type === "view") {
-          setView(message.view);
-          setError(null);
-        }
-        if (message.type === "error") setError(message.error);
-      };
-    },
-    [code],
-  );
+  const join = useCallback((nickname: string) => connect.current({ type: "join", code, nickname }), [code]);
 
-  return { view, playerId, error, join, send };
+  return { view, playerId, status, error, join, send };
 }
