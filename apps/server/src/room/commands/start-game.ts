@@ -24,5 +24,7 @@ export function startGame(state: RoomState, command: StartGameCommand, ctx: Room
     state.people.map((p) => p.id),
     ctx.rng,
   );
+  // Only people still in the Room play the new Game: nobody departed from it yet.
+  state.departed = [];
   return { ok: true };
 }

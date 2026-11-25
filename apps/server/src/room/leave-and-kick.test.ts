@@ -354,6 +354,34 @@ describe("the departed player's Seat", () => {
   });
 });
 
+describe("the departed player's nickname", () => {
+  it("can't be taken by a new arrival while the Game still shows it", () => {
+    const { room, cat } = threePlayerGame(...rolls(6, 6, 5, 5, 4), ...rolls(1, 2, 3, 4, 5));
+    mustAccept(room, { type: "leave", by: cat });
+    const before = room.views();
+
+    const { result, views } = room.dispatch({ type: "join", nickname: " cat " });
+
+    expect(result).toMatchObject({ ok: false, error: { code: "nickname-taken" } });
+    expect(views).toEqual(before);
+  });
+
+  it("is free again once a rematch starts, and the rematch shows no departed players", () => {
+    const room = newRoom({
+      rng: scriptedRng(0, ...rolls(...ANA), ...rolls(...BEN), 0, ...rolls(...ANA), ...rolls(...CAT)),
+    });
+    const [ana, ben] = ["Ana", "Ben"].map((n) => joinAs(room, n)) as [PlayerId, PlayerId];
+    mustAccept(room, { type: "start-game", by: ana });
+    mustAccept(room, { type: "kick", by: ana, player: ben });
+    joinAs(room, "Cat");
+
+    const { views } = room.dispatch({ type: "start-game", by: ana });
+
+    for (const view of views.values()) expect(view.departed).toEqual([]);
+    expect(room.dispatch({ type: "join", nickname: "Ben" }).result).toMatchObject({ ok: true });
+  });
+});
+
 describe("the Host leaving", () => {
   it("passes the Host role to the next player in Seat order immediately", () => {
     const room = newRoom();

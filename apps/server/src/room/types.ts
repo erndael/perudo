@@ -30,7 +30,10 @@ export interface RoomState {
   calzaEnabled: boolean;
   /** The Game in progress, if any. Holds every player's dice: never copy it into a view wholesale. */
   game: Game | null;
-  /** People who left or were kicked during the current Game, so its Seats and reveal can still name them. */
+  /**
+   * People who left or were kicked during the current Game, so its Seats and reveal can still name
+   * them (their nicknames stay taken). Emptied when the next Game starts.
+   */
   departed: { id: PlayerId; nickname: string }[];
 }
 
