@@ -11,6 +11,7 @@ export function DiceStage({ children }: { children: ReactNode }) {
   return (
     <div className="dice-stage" aria-hidden="true">
       <Canvas
+        style={{ pointerEvents: "none" }}
         shadows="percentage"
         dpr={[1, 2]}
         camera={{ position: [0, 10.5, 5.5], fov: 40 }}
