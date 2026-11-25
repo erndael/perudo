@@ -4,9 +4,14 @@ import type { ClientMessage, GameView, RoomView } from "@perudo/server/protocol"
 
 const FACES: Face[] = [2, 3, 4, 5, 6, 1];
 
+/** "4", "Paco". */
+function faceName(face: Face): string {
+  return face === 1 ? "Paco" : String(face);
+}
+
 /** "3 × 4", "2 × Paco". */
 export function formatBid({ count, face }: Bid): string {
-  return `${count} × ${face === 1 ? "Paco" : face}`;
+  return `${count} × ${faceName(face)}`;
 }
 
 /** Whose Turn it is, the current Round's Bids, and on your Turn the Bid controls and Dudo (once there is a Bid). */
@@ -67,6 +72,13 @@ function BidControls({ game, send }: { game: GameView; send(message: ClientMessa
 
   return (
     <form aria-label="Your Bid" className="bid-controls" onSubmit={(e) => e.preventDefault()}>
+      {rules.palifico && (
+        <p className="hint">
+          {rules.current
+            ? `The Face is locked to ${faceName(rules.current.face)}.`
+            : "You open this Palifico Round: any Face, Pacos included."}
+        </p>
+      )}
       <label>
         Count
         <input

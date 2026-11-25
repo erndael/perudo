@@ -49,7 +49,8 @@ export type RoomErrorCode =
   | "not-connected"
   | "round-over"
   | "no-bid"
-  | "round-in-progress";
+  | "round-in-progress"
+  | "game-over";
 
 export interface RoomError {
   code: RoomErrorCode;
@@ -84,9 +85,10 @@ export interface RoomView {
 
 /**
  * Where the Game is: "bidding" while the Round is open, "reveal" once it has resolved
- * (until the Host starts the next Round).
+ * (until the Host starts the next Round), "over" once one player has dice left (until the
+ * Host starts a rematch). The final reveal stays visible while the Game is over.
  */
-export type GamePhase = "bidding" | "reveal";
+export type GamePhase = "bidding" | "reveal" | "over";
 
 /** What everyone sees once a Round resolves: every player's dice, and the outcome. */
 export interface RevealView {
@@ -108,7 +110,7 @@ export interface GameView {
   opener: PlayerId;
   /** Sum of every player's die count. */
   totalDice: number;
-  /** Everyone playing this Game, in Seat order. Die counts only: dice stay secret. */
+  /** Everyone playing this Game, in Seat order. Die counts only: dice stay secret. 0 = Eliminated. */
   players: { id: PlayerId; dieCount: number }[];
   /** Whose Turn it is. */
   turn: PlayerId;
@@ -118,6 +120,8 @@ export interface GameView {
   palifico: boolean;
   /** The viewer's own dice this Round, as rolled; null if the viewer isn't playing in this Game. */
   yourDice: Face[] | null;
-  /** Every player's dice and the Round outcome: only in the "reveal" phase, null otherwise. */
+  /** Every player's dice and the Round outcome: once the Round has resolved ("reveal", and "over" after a final Dudo). */
   reveal: RevealView | null;
+  /** The only player with dice left once the Game is over; null until then. */
+  winner: PlayerId | null;
 }

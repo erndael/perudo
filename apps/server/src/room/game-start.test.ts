@@ -147,6 +147,7 @@ describe("dice visibility", () => {
       ],
       yourDice: [1, 1, 2, 6, 6],
       reveal: null,
+      winner: null,
     });
     expect(JSON.stringify(views.get(ana))).not.toContain("[1,1,2,6,6]");
     expect(JSON.stringify(views.get(cat))).not.toContain("[1,1,2,6,6]");

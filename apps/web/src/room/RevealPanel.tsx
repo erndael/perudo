@@ -42,7 +42,7 @@ export function RevealPanel({ view, diceIn3D = false }: { view: RoomView; diceIn
           </ol>
         </div>
       ))}
-      {view.you !== view.hostId && <p className="hint">Waiting for the Host to start the next Round.</p>}
+      {view.you !== view.hostId && view.game?.phase === "reveal" && <p className="hint">Waiting for the Host to start the next Round.</p>}
     </section>
   );
 }

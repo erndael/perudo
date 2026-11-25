@@ -53,6 +53,11 @@ label {
   margin-right: 0.5rem;
 }
 
+.game .palifico {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid #7c3aed;
+}
+
 .bidding .turn {
   font-weight: bold;
 }
@@ -127,4 +132,11 @@ label {
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+.game-over .winner {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid #16a34a;
+  font-size: 1.25em;
+  font-weight: bold;
 }
