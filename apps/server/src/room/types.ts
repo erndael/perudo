@@ -1,7 +1,7 @@
-import type { Face, Game, PlacedBid, RoundOutcome } from "@perudo/engine";
+import type { Face, Game, PlacedBid, PlayerId, RoundOutcome } from "@perudo/engine";
 import type { Clock, Rng } from "../deps.ts";
 
-export type PlayerId = string;
+export type { PlayerId } from "@perudo/engine";
 
 /** A person in the Room. Their index in `RoomState.people` is their Seat (join order). */
 export interface Person {

@@ -1,4 +1,4 @@
-import type { Face } from "./dice.ts";
+import { PACO, type Face } from "./dice.ts";
 import { isPalifico, totalDice, type Game, type PlayerId } from "./game.ts";
 import { nextInSeatOrder } from "./seats.ts";
 
@@ -28,11 +28,16 @@ export interface BidRules {
 
 /** The rules for the next Bid in `game`'s current Round. */
 export function bidRulesFor(game: Game): BidRules {
-  return {
-    current: game.round.bids.at(-1) ?? null,
-    totalDice: totalDice(game),
-    palifico: isPalifico(game),
-  };
+  return bidRules({ bids: game.round.bids, totalDice: totalDice(game), palifico: isPalifico(game) });
+}
+
+/**
+ * The rules for the next Bid, from what a player can see of the Round: its Bids so far (oldest
+ * first), the total dice in play and whether it is a Palifico Round. A client's view of the Game
+ * has exactly these, so it can grey out illegal Bids (the server checks again with `bidRulesFor`).
+ */
+export function bidRules(round: { bids: readonly Bid[]; totalDice: number; palifico: boolean }): BidRules {
+  return { current: round.bids.at(-1) ?? null, totalDice: round.totalDice, palifico: round.palifico };
 }
 
 /**
@@ -57,8 +62,6 @@ export function isLegalBid(bid: Bid, rules: BidRules): boolean {
   // Faces rank 2 < 3 < 4 < 5 < 6, so for non-Paco Faces the numeric order is the rank.
   return count > current.count || (count === current.count && face > current.face);
 }
-
-const PACO: Face = 1;
 
 /**
  * The player whose Turn it is makes `bid`, and the Turn passes to the next Seat

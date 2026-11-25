@@ -1,8 +1,6 @@
 import type { PlacedBid } from "./bidding.ts";
-import type { Face } from "./dice.ts";
-import { dieCount, isPalifico, STARTING_DICE, type Game, type PlayerId } from "./game.ts";
-
-const PACO: Face = 1;
+import { PACO, type Face } from "./dice.ts";
+import { dieCount, isPalifico, MAX_DICE, type Game, type PlayerId } from "./game.ts";
 
 /**
  * How a Round ended. Set on `Round.outcome` when the Round resolves; the Game then sits in the
@@ -77,7 +75,7 @@ export function callCalza(game: Game): Game {
   const bid = game.round.bids.at(-1)!;
   const count = actualCount(game, bid.face);
   const dice = game.players.find((p) => p.id === caller)!.dice.length;
-  const delta = count !== bid.count ? -1 : dice < STARTING_DICE ? 1 : 0;
+  const delta = count !== bid.count ? -1 : dice < MAX_DICE ? 1 : 0;
   const outcome: RoundOutcome = {
     call: "calza",
     caller,

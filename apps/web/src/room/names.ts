@@ -4,3 +4,8 @@ import type { PlayerId, RoomView } from "@perudo/server/protocol";
 export function nicknameOf(view: RoomView, id: PlayerId): string {
   return (view.people.find((p) => p.id === id) ?? view.departed.find((p) => p.id === id))?.nickname ?? "?";
 }
+
+/** `nicknameOf` bound to one view, for components that look up many names. */
+export function nicknamesIn(view: RoomView): (id: PlayerId) => string {
+  return (id) => nicknameOf(view, id);
+}

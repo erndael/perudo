@@ -1,3 +1,4 @@
+import type { PlayerId } from "@perudo/engine";
 import { useThree } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo } from "react";
 import { CanvasTexture, MathUtils, SRGBColorSpace, Vector3, type PerspectiveCamera } from "three";
@@ -31,7 +32,7 @@ function RevealTable({ players }: { players: readonly RevealScenePlayer[] }) {
   const size = useThree((s) => s.size);
   const aspect = size.width / Math.max(1, size.height);
   const layout = useMemo(() => revealLayout(players, revealColumns(players.length, aspect)), [players, aspect]);
-  const nickname = (id: string) => players.find((p) => p.id === id)?.nickname ?? "";
+  const nickname = (id: PlayerId) => players.find((p) => p.id === id)?.nickname ?? "";
 
   return (
     <>

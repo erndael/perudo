@@ -1,19 +1,11 @@
 import { useState } from "react";
-import { isLegalBid, type Bid, type BidRules, type Face } from "@perudo/engine";
+import { bidRules, isLegalBid, PACO, type BidRules, type Face } from "@perudo/engine";
 import type { ClientMessage, GameView, RoomView } from "@perudo/server/protocol";
-import { nicknameOf } from "./names.ts";
+import { faceName, formatBid } from "./format.ts";
+import { nicknamesIn } from "./names.ts";
 
-const FACES: Face[] = [2, 3, 4, 5, 6, 1];
-
-/** "4", "Paco". */
-function faceName(face: Face): string {
-  return face === 1 ? "Paco" : String(face);
-}
-
-/** "3 × 4", "2 × Paco". */
-export function formatBid({ count, face }: Bid): string {
-  return `${count} × ${faceName(face)}`;
-}
+/** In the order the Bid buttons show them: Faces by rank, Pacos last. */
+const FACES: Face[] = [2, 3, 4, 5, 6, PACO];
 
 /**
  * Whose Turn it is, the current Round's Bids, and on your Turn the Bid controls, plus Dudo and
@@ -22,7 +14,7 @@ export function formatBid({ count, face }: Bid): string {
 export function BiddingPanel({ view, send }: { view: RoomView; send(message: ClientMessage): void }) {
   const game = view.game;
   if (!game) return null;
-  const nickname = (id: string) => nicknameOf(view, id);
+  const nickname = nicknamesIn(view);
   const bidding = game.phase === "bidding";
   const yourTurn = bidding && game.turn === view.you;
 
@@ -59,10 +51,6 @@ export function BiddingPanel({ view, send }: { view: RoomView; send(message: Cli
   );
 }
 
-function rulesFor(game: GameView): BidRules {
-  return { current: game.bids.at(-1) ?? null, totalDice: game.totalDice, palifico: game.palifico };
-}
-
 /** The lowest count with at least one legal Bid, or null if no Bid is legal. */
 function lowestLegalCount(rules: BidRules): number | null {
   for (let count = 1; count <= rules.totalDice; count++) {
@@ -73,7 +61,7 @@ function lowestLegalCount(rules: BidRules): number | null {
 
 /** Choose a count, then click a Face to Bid. Illegal Bids are greyed out (the server checks again). */
 function BidControls({ game, send }: { game: GameView; send(message: ClientMessage): void }) {
-  const rules = rulesFor(game);
+  const rules = bidRules(game);
   const lowest = lowestLegalCount(rules);
   const [count, setCount] = useState(lowest ?? 1);
 

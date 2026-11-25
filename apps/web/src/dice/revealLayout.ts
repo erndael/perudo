@@ -1,8 +1,8 @@
-import { STARTING_DICE, type Face } from "@perudo/engine";
+import { MAX_DICE, type Face, type PlayerId } from "@perudo/engine";
 
 /** A player's revealed dice as the server sends them; `counts` is the server's marking, never recomputed here. */
 export interface RevealLayoutPlayer {
-  id: string;
+  id: PlayerId;
   dice: readonly { face: Face; counts: boolean }[];
 }
 
@@ -16,7 +16,7 @@ export interface PlacedDie {
 }
 
 export interface RevealGroup {
-  id: string;
+  id: PlayerId;
   /** Flat strip on the table for the player's name: centre (x, z) and size. */
   label: { x: number; z: number; width: number; depth: number };
   dice: PlacedDie[];
@@ -50,7 +50,7 @@ const COLUMN_GAP = 1.5;
  * the whole layout centred on the origin. Pure: no three.js.
  */
 export function revealLayout(players: readonly RevealLayoutPlayer[], columns: number): RevealLayout {
-  const longestRow = Math.max(STARTING_DICE, ...players.map((p) => p.dice.length));
+  const longestRow = Math.max(MAX_DICE, ...players.map((p) => p.dice.length));
   const { cols, columnWidth, width, depth } = extent(players.length, columns, longestRow);
   return {
     width,
@@ -72,7 +72,7 @@ export function revealLayout(players: readonly RevealLayoutPlayer[], columns: nu
   };
 }
 
-function extent(playerCount: number, columns: number, longestRow = STARTING_DICE) {
+function extent(playerCount: number, columns: number, longestRow = MAX_DICE) {
   const cols = Math.max(1, Math.min(columns, playerCount));
   const rows = Math.ceil(playerCount / cols);
   const columnWidth = (longestRow - 1) * DIE_PITCH + DIE;

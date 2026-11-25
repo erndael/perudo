@@ -1,12 +1,12 @@
-import type { GameView } from "@perudo/server/protocol";
+import type { GameView, PlayerId } from "@perudo/server/protocol";
 import { Reveal3D, YourDice3D } from "../dice/Dice3D.tsx";
 
 interface GamePanelProps {
   game: GameView;
-  you: string;
-  nickname: (id: string) => string;
+  you: PlayerId;
+  nickname: (id: PlayerId) => string;
   /** Whether the 3D dice are running (see `use3D`); `onFail3D` switches back to the HTML dice. */
-  threeD: boolean;
+  diceIn3D: boolean;
   onFail3D: () => void;
 }
 
@@ -14,7 +14,7 @@ interface GamePanelProps {
  * The Game in progress: Round, total dice in play and the viewer's own dice (thrown in 3D).
  * At the end of a Round the 3D view shows every player's dice instead (the reveal), until the next Round's throw.
  */
-export function GamePanel({ game, you, nickname, threeD, onFail3D }: GamePanelProps) {
+export function GamePanel({ game, you, nickname, diceIn3D, onFail3D }: GamePanelProps) {
   const eliminated = game.players.some((p) => p.id === you && p.dieCount === 0);
   return (
     <section className="game">
@@ -30,7 +30,7 @@ export function GamePanel({ game, you, nickname, threeD, onFail3D }: GamePanelPr
         <>
           <h3 id="your-dice-heading">Your dice</h3>
           {/* The server's Faces as HTML: the accessible (and tested) truth. Visually hidden while the 3D dice show them. */}
-          <ol aria-labelledby="your-dice-heading" className={threeD ? "dice visually-hidden" : "dice"}>
+          <ol aria-labelledby="your-dice-heading" className={diceIn3D ? "dice visually-hidden" : "dice"}>
             {game.yourDice.map((face, i) => (
               <li key={i} className="die">
                 {face}
@@ -42,7 +42,7 @@ export function GamePanel({ game, you, nickname, threeD, onFail3D }: GamePanelPr
         <p>You'll join the next Game.</p>
       )}
       {/* One 3D scene at a time: the reveal while the Round is over, otherwise the viewer's own throw. */}
-      {threeD &&
+      {diceIn3D &&
         (game.reveal ? (
           <Reveal3D
             // Players Eliminated before this Round rolled no dice: nothing to lay out for them.

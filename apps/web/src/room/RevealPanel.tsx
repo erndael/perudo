@@ -1,15 +1,17 @@
-import type { RevealView, RoomView } from "@perudo/server/protocol";
-import { formatBid } from "./BiddingPanel.tsx";
-import { nicknameOf } from "./names.ts";
+import { MAX_DICE } from "@perudo/engine";
+import type { PlayerId, RevealView, RoomView } from "@perudo/server/protocol";
+import { formatBid } from "./format.ts";
+import { nicknamesIn } from "./names.ts";
 
 /**
  * "Ana called Dudo on Cat's 4 × 6. There were 3. Cat loses a die."
  * "Cat called Calza on Ben's 8 × 4. There were exactly 8. Cat gains a die." (or "already has 5 dice.")
  */
-export function outcomeBanner(reveal: RevealView, nickname: (id: string) => string): string {
+export function outcomeBanner(reveal: RevealView, nickname: (id: PlayerId) => string): string {
   const { call, caller, bid, actualCount, dieChange } = reveal.outcome;
   const count = actualCount === bid.count ? `exactly ${actualCount}` : String(actualCount);
-  const change = dieChange.delta < 0 ? "loses a die" : dieChange.delta > 0 ? "gains a die" : "already has 5 dice";
+  const change =
+    dieChange.delta < 0 ? "loses a die" : dieChange.delta > 0 ? "gains a die" : `already has ${MAX_DICE} dice`;
   return (
     `${nickname(caller)} called ${call === "calza" ? "Calza" : "Dudo"} on ${nickname(bid.by)}'s ${formatBid(bid)}. ` +
     `There ${actualCount === 1 ? "was" : "were"} ${count}. ${nickname(dieChange.player)} ${change}.`
@@ -25,7 +27,7 @@ export function outcomeBanner(reveal: RevealView, nickname: (id: string) => stri
 export function RevealPanel({ view, diceIn3D = false }: { view: RoomView; diceIn3D?: boolean }) {
   const reveal = view.game?.reveal;
   if (!reveal) return null;
-  const nickname = (id: string) => nicknameOf(view, id);
+  const nickname = nicknamesIn(view);
 
   return (
     <section className="reveal" aria-labelledby="reveal-heading">

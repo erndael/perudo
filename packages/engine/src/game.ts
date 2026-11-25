@@ -6,6 +6,8 @@ import { nextInSeatOrder } from "./seats.ts";
 export type PlayerId = string;
 
 export const STARTING_DICE = 5;
+/** Nobody ever has more dice than they started with: a Calza can't take a player above it. */
+export const MAX_DICE = STARTING_DICE;
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 6;
 
