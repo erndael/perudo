@@ -44,7 +44,7 @@ describe("reconnecting to a Room", () => {
     const { result } = room.dispatch({ type: "reconnect", token: ana.token });
 
     expect(result).toMatchObject({ ok: true, playerId: ana.id });
-    expect(room.views().get(ana.id)?.people).toEqual([{ id: ana.id, nickname: "Ana", connected: true }]);
+    expect(room.views().get(ana.id)?.people).toEqual([{ id: ana.id, nickname: "Ana", waiting: false, connected: true }]);
   });
 
   it("rejects a token it never issued, without changing anything", () => {
@@ -72,9 +72,9 @@ describe("disconnected players", () => {
     expect([...views.keys()]).toEqual([ana, cat]);
     for (const view of views.values()) {
       expect(view.people).toEqual([
-        { id: ana, nickname: "Ana", connected: true },
-        { id: ben, nickname: "Ben", connected: false },
-        { id: cat, nickname: "Cat", connected: true },
+        { id: ana, nickname: "Ana", waiting: false, connected: true },
+        { id: ben, nickname: "Ben", waiting: false, connected: false },
+        { id: cat, nickname: "Cat", waiting: false, connected: true },
       ]);
     }
   });

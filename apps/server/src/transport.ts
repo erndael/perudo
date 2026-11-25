@@ -3,7 +3,13 @@
 // A closed connection becomes a `disconnect` command; a timer then sends `tick` so
 // time-based rules (Host handover) apply even if nobody does anything.
 import type { WebSocket, WebSocketServer } from "ws";
-import type { ClientMessage, ServerMessage, TransportCommandType, WireError } from "./protocol.ts";
+import {
+  ROOM_NOT_FOUND,
+  type ClientMessage,
+  type ServerMessage,
+  type TransportCommandType,
+  type WireError,
+} from "./protocol.ts";
 import type { Registry } from "./registry.ts";
 import { HOST_DISCONNECT_GRACE_MS, type PlayerId, type Room, type RoomCommand, type RoomView } from "./room/index.ts";
 
@@ -46,7 +52,7 @@ export function attachTransport(wss: WebSocketServer, registry: Registry): void 
       if (message.type === "join" || message.type === "reconnect") {
         if (bound) return sendError(ws, { code: "already-joined", message: "You are already in a Room." });
         const room = registry.get(String(message.code));
-        if (!room) return sendError(ws, { code: "room-not-found", message: "This Room doesn't exist." });
+        if (!room) return sendError(ws, ROOM_NOT_FOUND);
         const { result, views } = room.dispatch(
           message.type === "join"
             ? { type: "join", nickname: message.nickname }
@@ -82,6 +88,7 @@ export function attachTransport(wss: WebSocketServer, registry: Registry): void 
       // Replaced by a newer connection for the same Seat: that one is still connected.
       if (inRoom?.get(playerId) !== ws) return;
       inRoom.delete(playerId);
+      if (inRoom.size === 0) sockets.delete(room.code);
       broadcast(room, room.dispatch({ type: "disconnect", by: playerId }).views);
       // If this was the Host, the role may pass on once the grace period is over.
       setTimeout(() => broadcast(room, room.dispatch({ type: "tick" }).views), HOST_DISCONNECT_GRACE_MS + 100).unref();

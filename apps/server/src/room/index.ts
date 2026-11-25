@@ -3,6 +3,7 @@
 import type { Clock, Rng } from "../deps.ts";
 import { handlers, type RoomCommand } from "./commands/index.ts";
 import { passHostIfAway } from "./host.ts";
+import { isEmpty } from "./occupancy.ts";
 import { reject, type CommandResult, type PlayerId, type RoomState, type RoomView } from "./types.ts";
 import { viewFor } from "./view.ts";
 
@@ -22,11 +23,14 @@ export interface Room {
   dispatch(command: RoomCommand): DispatchOutcome;
   /** The current view for every connected player, without changing anything. */
   views(): Map<PlayerId, RoomView>;
+  /** Clock time at which the Room last became empty (a new Room starts empty); null while anyone is in it. */
+  emptySince(): number | null;
 }
 
 export function createRoom(opts: { code: string; rng: Rng; clock: Clock; newToken: () => string }): Room {
   const state: RoomState = { code: opts.code, people: [], hostId: null, nextPlayerNumber: 1, game: null };
   const ctx = { rng: opts.rng, clock: opts.clock, newToken: opts.newToken };
+  let emptySince: number | null = opts.clock();
 
   const views = () => new Map(state.people.filter((p) => p.connected).map((p) => [p.id, viewFor(state, p.id)]));
   /** Every rule driven by the clock. Idempotent: safe to run any number of times. */
@@ -35,6 +39,7 @@ export function createRoom(opts: { code: string; rng: Rng; clock: Clock; newToke
   return {
     code: opts.code,
     views,
+    emptySince: () => emptySince,
     dispatch(command) {
       const handler = Object.hasOwn(handlers, command?.type)
         ? (handlers[command.type] as (s: RoomState, c: RoomCommand, x: typeof ctx) => CommandResult)
@@ -44,6 +49,8 @@ export function createRoom(opts: { code: string; rng: Rng; clock: Clock; newToke
       passTime();
       const result = handler ? handler(state, command, ctx) : reject("unknown-command", "Unknown command.");
       passTime();
+      if (!isEmpty(state)) emptySince = null;
+      else emptySince ??= opts.clock();
       return { result, views: views() };
     },
   };

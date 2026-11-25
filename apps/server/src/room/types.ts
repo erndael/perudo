@@ -40,6 +40,8 @@ export type RoomErrorCode =
   | "game-in-progress"
   | "not-enough-players"
   | "too-many-players"
+  | "room-full"
+  | "nickname-taken"
   | "invalid-token"
   | "not-connected";
 
@@ -63,7 +65,13 @@ export interface RoomView {
   you: PlayerId;
   hostId: PlayerId | null;
   /** In Seat order. Disconnected people keep their Seat. */
-  people: { id: PlayerId; nickname: string; connected: boolean }[];
+  people: {
+    id: PlayerId;
+    nickname: string;
+    /** Arrived while a Game was in progress: not playing it, joins the next Game. */
+    waiting: boolean;
+    connected: boolean;
+  }[];
   /** The Game in progress, or null before the first Game. */
   game: GameView | null;
 }

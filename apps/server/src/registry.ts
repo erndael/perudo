@@ -9,10 +9,15 @@ const CODE_LENGTH = 6;
 const TOKEN_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 /** 22 characters of 62 is about 131 bits: unguessable when `rng` is secure. */
 const TOKEN_LENGTH = 22;
+/** A Room is deleted this long after it becomes empty. */
+export const ROOM_EXPIRY_MS = 10 * 60_000;
 
 export interface Registry {
   create(): Room;
+  /** Undefined for a code that was never created or whose Room has expired. */
   get(code: string): Room | undefined;
+  /** Deletes every expired Room and returns their codes. The server calls this periodically. */
+  sweep(): string[];
 }
 
 export interface RegistryDeps {
@@ -40,6 +45,11 @@ export function createRegistry(deps: RegistryDeps): Registry {
   const newToken = () =>
     Array.from({ length: TOKEN_LENGTH }, () => TOKEN_ALPHABET[deps.rng(TOKEN_ALPHABET.length)]).join("");
 
+  const isExpired = (room: Room) => {
+    const since = room.emptySince();
+    return since !== null && deps.clock() - since >= ROOM_EXPIRY_MS;
+  };
+
   return {
     create() {
       const room = createRoom({ code: newCode(), rng: newRoomRng(), clock: deps.clock, newToken });
@@ -47,7 +57,17 @@ export function createRegistry(deps: RegistryDeps): Registry {
       return room;
     },
     get(code) {
-      return rooms.get(code);
+      const room = rooms.get(code);
+      if (room && isExpired(room)) {
+        rooms.delete(code);
+        return undefined;
+      }
+      return room;
+    },
+    sweep() {
+      const expired = [...rooms.values()].filter(isExpired).map((room) => room.code);
+      for (const code of expired) rooms.delete(code);
+      return expired;
     },
   };
 }
