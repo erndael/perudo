@@ -135,6 +135,9 @@ describe("dice visibility", () => {
     expect(views.get(ben)?.game).toEqual({
       round: 1,
       opener: ana,
+      turn: ana,
+      bids: [],
+      palifico: false,
       totalDice: 15,
       players: [
         { id: ana, dieCount: 5 },

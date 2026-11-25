@@ -1,4 +1,4 @@
-import type { Face, Game } from "@perudo/engine";
+import type { Face, Game, PlacedBid } from "@perudo/engine";
 import type { Clock, Rng } from "../deps.ts";
 
 export type PlayerId = string;
@@ -42,6 +42,9 @@ export type RoomErrorCode =
   | "too-many-players"
   | "room-full"
   | "nickname-taken"
+  | "no-game"
+  | "not-your-turn"
+  | "illegal-bid"
   | "invalid-token"
   | "not-connected";
 
@@ -86,6 +89,12 @@ export interface GameView {
   totalDice: number;
   /** Everyone playing this Game, in Seat order. Die counts only: dice stay secret. */
   players: { id: PlayerId; dieCount: number }[];
+  /** Whose Turn it is. */
+  turn: PlayerId;
+  /** Every Bid made this Round, oldest first; the last one is the current Bid. */
+  bids: PlacedBid[];
+  /** Whether this is a Palifico Round (changes which Bids are legal; see engine `BidRules`). */
+  palifico: boolean;
   /** The viewer's own dice this Round; null if the viewer isn't playing in this Game. */
   yourDice: Face[] | null;
 }

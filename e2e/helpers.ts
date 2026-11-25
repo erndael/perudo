@@ -41,3 +41,19 @@ export function yourDice(page: Page) {
 export async function startGame(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Start Game" }).click();
 }
+
+/** The current Round's Bids, oldest first, each reading like "Ben: 3 × 4" or "Cat: 2 × Paco". */
+export function bidHistory(page: Page) {
+  return page.getByRole("list", { name: "Bids" }).getByRole("listitem");
+}
+
+/** The button that makes a Bid of `count` on `face` ("2".."6" or "Paco") once Count is set to `count`. */
+export function bidButton(page: Page, count: number, face: string) {
+  return page.getByRole("button", { name: `Bid ${count} × ${face}`, exact: true });
+}
+
+/** Makes a Bid on the player's Turn: sets the count, then clicks the Face. */
+export async function makeBid(page: Page, count: number, face: string): Promise<void> {
+  await page.getByLabel("Count").fill(String(count));
+  await bidButton(page, count, face).click();
+}

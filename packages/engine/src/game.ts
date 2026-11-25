@@ -1,3 +1,4 @@
+import type { PlacedBid } from "./bidding.ts";
 import { rollDice, type Face, type Rng } from "./dice.ts";
 
 export type PlayerId = string;
@@ -17,6 +18,12 @@ export interface Round {
   /** 1 for the Game's first Round, then +1 for every new roll of the dice. */
   number: number;
   opener: PlayerId;
+  /** Whose Turn it is: the Opener's at the start of a Round, then the next Seat with dice after each Bid. */
+  turn: PlayerId;
+  /** Every Bid made this Round, oldest first. The last one is the current Bid. */
+  bids: PlacedBid[];
+  /** A Palifico Round (see `BidRules.palifico`). Never set yet: ticket 06 triggers it. */
+  palifico: boolean;
 }
 
 /** One Game, from start until a single player has dice left. */
@@ -34,7 +41,7 @@ export interface Game {
 export function startGame(playerIds: readonly PlayerId[], rng: Rng): Game {
   const opener = playerIds[rng(playerIds.length)]!;
   const players = playerIds.map((id) => ({ id, dice: rollDice(STARTING_DICE, rng) }));
-  return { players, round: { number: 1, opener } };
+  return { players, round: { number: 1, opener, turn: opener, bids: [], palifico: false } };
 }
 
 /** All dice in play across every player. */

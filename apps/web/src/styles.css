@@ -1,4 +1,5 @@
 :root {
+  --dice-stage-height: 50vh;
   font-family: system-ui, sans-serif;
   color-scheme: light dark;
 }
@@ -50,4 +51,50 @@ label {
   gap: 0.5rem;
   align-items: center;
   margin-right: 0.5rem;
+}
+
+.bidding .turn {
+  font-weight: bold;
+}
+
+.bid-controls .faces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.bid-controls input {
+  width: 4rem;
+}
+
+/* The 3D dice sit in a fixed backdrop at the bottom of the viewport, behind the page; the HTML layer
+   stays on top and clickable, and the Game panel leaves room below it so text can scroll clear of the dice. */
+.dice-stage {
+  position: fixed;
+  inset: auto 0 0;
+  height: var(--dice-stage-height);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+}
+
+.game {
+  padding-bottom: var(--dice-stage-height);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
