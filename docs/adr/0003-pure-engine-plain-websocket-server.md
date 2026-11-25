@@ -1,6 +1,6 @@
 # Pure rules engine behind a plain WebSocket server
 
-A TypeScript pnpm monorepo: `packages/engine` holds the rules as pure functions with an injected RNG (no I/O), `apps/server` is a Node `ws` server that applies engine actions and sends each player a view filtered to what they may see, and `apps/web` is Vite + React with react-three-fiber and `@react-three/rapier`. The engine is shared with the client only to grey out illegal bids; the server stays authoritative (ADR-0001).
+A TypeScript pnpm monorepo: `packages/engine` holds the rules as pure functions with an injected RNG (no I/O), `apps/server` is a Node `ws` server that applies engine actions and sends each player a view filtered to what they may see, and `apps/web` is Vite + React with react-three-fiber and rapier (`@dimforge/rapier3d-compat`, run before display, see ADR-0002). The engine is shared with the client only to grey out illegal bids; the server stays authoritative (ADR-0001).
 
 ## Considered Options
 

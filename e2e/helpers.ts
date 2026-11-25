@@ -1,0 +1,90 @@
+// Journeys shared by e2e tests. Assert on the HTML layer, never the 3D canvas.
+import { expect, type Browser, type Page } from "@playwright/test";
+
+/** A fresh browser context (separate storage, like a separate person) with one page. */
+export async function newPlayer(browser: Browser): Promise<Page> {
+  const context = await browser.newContext();
+  return context.newPage();
+}
+
+/** Creates a Room from the home page and joins it with `nickname`. Returns the Room link. */
+export async function createRoom(page: Page, nickname: string): Promise<string> {
+  const link = await openNewRoom(page);
+  await enterNickname(page, nickname);
+  return link;
+}
+
+/** Creates a Room from the home page, stopping at its nickname form (not joined yet). Returns the Room link. */
+export async function openNewRoom(page: Page): Promise<string> {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Create a Room" }).click();
+  await expect(page).toHaveURL(/\/r\/[A-Z0-9]{6}$/);
+  return page.url();
+}
+
+/** Opens a Room link and joins with `nickname`. */
+export async function joinRoom(page: Page, link: string, nickname: string): Promise<void> {
+  await page.goto(link);
+  await enterNickname(page, nickname);
+}
+
+export async function enterNickname(page: Page, nickname: string): Promise<void> {
+  await page.getByLabel("Nickname").fill(nickname);
+  await page.getByRole("button", { name: "Join" }).click();
+}
+
+/** The people list items, in Seat order. Each reads like "Ana Host You", plus "Opener" and "5 dice" during a Game. */
+export function people(page: Page) {
+  return page.getByRole("list", { name: "People" }).getByRole("listitem");
+}
+
+/** The viewer's own dice, one item per die, each the Face as text ("1".."6"). */
+export function yourDice(page: Page) {
+  return page.getByRole("list", { name: "Your dice" }).getByRole("listitem");
+}
+
+/** The Host starts a Game from the Room page. */
+export async function startGame(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Start Game" }).click();
+}
+
+/** The current Round's Bids, oldest first, each reading like "Ben: 3 × 4" or "Cat: 2 × Paco". */
+export function bidHistory(page: Page) {
+  return page.getByRole("list", { name: "Bids" }).getByRole("listitem");
+}
+
+/** The button that makes a Bid of `count` on `face` ("2".."6" or "Paco") once Count is set to `count`. */
+export function bidButton(page: Page, count: number, face: string) {
+  return page.getByRole("button", { name: `Bid ${count} × ${face}`, exact: true });
+}
+
+/** Makes a Bid on the player's Turn: sets the count, then clicks the Face. */
+export async function makeBid(page: Page, count: number, face: string): Promise<void> {
+  await page.getByLabel("Count").fill(String(count));
+  await bidButton(page, count, face).click();
+}
+
+/** Calls Dudo on the current Bid, on the player's Turn. */
+export async function callDudo(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Dudo" }).click();
+}
+
+/** Calls Calza on the current Bid, on the player's Turn. */
+export async function callCalza(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Calza" }).click();
+}
+
+/** The reveal's banner: who called what, the actual count, and who loses a die. */
+export function revealBanner(page: Page) {
+  return page.getByRole("region", { name: "Reveal" }).locator(".banner");
+}
+
+/** The winner screen shown once the Game is over: "<Nick> wins the Game!", plus the rematch hint for non-Hosts. */
+export function gameOver(page: Page) {
+  return page.getByRole("region", { name: "Game over" });
+}
+
+/** One player's revealed dice, in order: the Face as text, plus " (counts)" if it counts toward the Bid. */
+export function revealedDice(page: Page, nickname: string) {
+  return page.getByRole("region", { name: "Reveal" }).getByRole("list", { name: `${nickname}'s dice` }).getByRole("listitem");
+}

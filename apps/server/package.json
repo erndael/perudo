@@ -1,0 +1,19 @@
+{
+  "name": "@perudo/server",
+  "private": true,
+  "type": "module",
+  "exports": { "./protocol": "./src/protocol.ts" },
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "dev": "tsx watch src/main.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@perudo/engine": "workspace:*",
+    "ws": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.0",
+    "tsx": "^4.23.0"
+  }
+}

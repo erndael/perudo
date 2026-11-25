@@ -1,0 +1,25 @@
+{
+  "name": "perudo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.25.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "typecheck": "pnpm -r typecheck",
+    "build": "pnpm --filter @perudo/web build",
+    "start": "pnpm build && pnpm --filter @perudo/server start",
+    "dev": "pnpm --parallel --filter @perudo/server --filter @perudo/web dev"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^5.1.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}
