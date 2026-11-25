@@ -1,115 +1,73 @@
 import type { Face } from "@perudo/engine";
 import { useFrame } from "@react-three/fiber";
-import { CuboidCollider, RigidBody, type RapierRigidBody } from "@react-three/rapier";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Die, DIE_SIZE } from "./Die.tsx";
-import { remapFaces, STANDARD_SIDES, upSide, type SideFaces } from "./remapFaces.ts";
+import { useEffect, useRef, useState } from "react";
+import type { Group } from "three";
+import { Die } from "./Die.tsx";
+import { poseAt, simulateThrow, TRAY, type ThrowRecording } from "./simulateThrow.ts";
 
-/** Inner half-size of the tray the dice are thrown into (x, z). */
-export const TRAY = { halfWidth: 4.2, halfDepth: 2.8, wallHeight: 4 };
-
-/** Speeds below this count as at rest. */
-const REST_SPEED = 0.06;
-/** Frames in a row at rest before a die counts as settled. */
-const REST_FRAMES = 12;
-/** After this long a die is treated as settled even if it still wobbles (slow software rendering, stacked dice). */
-const SETTLE_TIMEOUT_S = 6;
+/** Longest frame the playback advances by, so a stalled frame slows the throw down instead of skipping it. */
+const MAX_FRAME_SECONDS = 0.1;
 
 /**
- * The viewer's own dice thrown into a tray with physics. Remount (via `key`) to throw again.
- * Physics only decides how each die lands; once it rests, its textures are remapped so the
- * server's Face is on top (ADR-0002).
+ * The viewer's own dice thrown into a tray. Remount (via `key`) to throw again; `faces` is read once per mount.
+ * The throw is simulated with physics before anything is shown, and each die is painted so the server's Face
+ * ends on top (ADR-0002); the recording is then played back, so the dice simply land on the right numbers.
  */
 export function ThrownDice({ faces }: { faces: readonly Face[] }) {
+  const [recording, setRecording] = useState<ThrowRecording | null>(null);
+  const [error, setError] = useState<unknown>(null);
+
+  useEffect(() => {
+    let current = true;
+    simulateThrow(faces).then(
+      (r) => current && setRecording(r),
+      (e: unknown) => current && setError(e ?? new Error("Dice simulation failed")),
+    );
+    return () => {
+      current = false;
+    };
+    // Thrown once per mount (a new Round remounts this with a new key), not whenever a view update
+    // hands over an equal `faces` array.
+  }, []);
+
+  if (error) throw error; // to the scene's error boundary, which falls back to the HTML dice
+
   return (
     <>
-      <Tray />
-      {faces.map((face, i) => (
-        <ThrownDie key={i} face={face} index={i} count={faces.length} />
-      ))}
+      <TrayFloor />
+      {recording?.tracks.map((_, i) => <PlayedBackDie key={i} recording={recording} index={i} />)}
     </>
   );
 }
 
-function Tray() {
-  const { halfWidth, halfDepth, wallHeight } = TRAY;
-  const t = 0.5; // wall half-thickness
+function TrayFloor() {
   return (
-    <RigidBody type="fixed" colliders={false} friction={0.9} restitution={0.2}>
-      {/* floor */}
-      <CuboidCollider args={[halfWidth + 2 * t, t, halfDepth + 2 * t]} position={[0, -t, 0]} />
-      {/* walls */}
-      <CuboidCollider args={[t, wallHeight, halfDepth + 2 * t]} position={[-halfWidth - t, wallHeight, 0]} />
-      <CuboidCollider args={[t, wallHeight, halfDepth + 2 * t]} position={[halfWidth + t, wallHeight, 0]} />
-      <CuboidCollider args={[halfWidth + 2 * t, wallHeight, t]} position={[0, wallHeight, -halfDepth - t]} />
-      <CuboidCollider args={[halfWidth + 2 * t, wallHeight, t]} position={[0, wallHeight, halfDepth + t]} />
-      {/* lid, so a wild bounce never leaves the tray */}
-      <CuboidCollider args={[halfWidth + 2 * t, t, halfDepth + 2 * t]} position={[0, 2 * wallHeight + t, 0]} />
-      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[2 * halfWidth, 2 * halfDepth]} />
-        <meshStandardMaterial color="#1f5a3a" roughness={0.95} />
-      </mesh>
-    </RigidBody>
+    <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[2 * TRAY.halfWidth, 2 * TRAY.halfDepth]} />
+      <meshStandardMaterial color="#1f5a3a" roughness={0.95} />
+    </mesh>
   );
 }
 
-const random = (min: number, max: number) => min + Math.random() * (max - min);
-
-function ThrownDie({ face, index, count }: { face: Face; index: number; count: number }) {
-  const body = useRef<RapierRigidBody>(null);
-  const [sides, setSides] = useState<SideFaces>(STANDARD_SIDES);
-  const state = useRef({ restFrames: 0, elapsed: 0, remappedFor: -1 });
-
-  // Cosmetic randomness only: where the die starts and how it is thrown.
-  const start = useMemo(() => {
-    const spread = Math.min(TRAY.halfWidth - 1, count * 0.7);
-    const x = count > 1 ? -spread + (2 * spread * index) / (count - 1) : 0;
-    return {
-      position: [x + random(-0.2, 0.2), 2.5 + random(0, 1.5), TRAY.halfDepth - 0.8] as [number, number, number],
-      rotation: [random(0, Math.PI * 2), random(0, Math.PI * 2), random(0, Math.PI * 2)] as [number, number, number],
-    };
-  }, [index, count]);
-
-  useEffect(() => {
-    const rb = body.current;
-    if (!rb) return;
-    rb.applyImpulse({ x: random(-1.5, 1.5), y: random(1, 3), z: -random(5, 9) }, true);
-    rb.applyTorqueImpulse({ x: random(-0.6, 0.6), y: random(-0.6, 0.6), z: random(-0.6, 0.6) }, true);
-  }, []);
+/** One die following its recorded track, already showing the Faces it will land with. */
+function PlayedBackDie({ recording, index }: { recording: ThrowRecording; index: number }) {
+  const group = useRef<Group>(null);
+  const elapsed = useRef(0);
+  const start = recording.tracks[index]![0]!;
 
   useFrame((_, delta) => {
-    const rb = body.current;
-    if (!rb) return;
-    const s = state.current;
-    s.elapsed += delta;
-    const v = rb.linvel();
-    const w = rb.angvel();
-    const atRest = Math.hypot(v.x, v.y, v.z) < REST_SPEED && Math.hypot(w.x, w.y, w.z) < REST_SPEED;
-    s.restFrames = atRest ? s.restFrames + 1 : 0;
-    if (s.restFrames < REST_FRAMES && s.elapsed < SETTLE_TIMEOUT_S) return;
-    // Settled. Remap once, and again only if a later knock leaves a different side up.
-    const q = rb.rotation();
-    const top = upSide(q);
-    if (top !== s.remappedFor) {
-      s.remappedFor = top;
-      setSides(remapFaces(q, face));
-    }
+    const g = group.current;
+    if (!g) return;
+    elapsed.current += Math.min(delta, MAX_FRAME_SECONDS);
+    const { position, quaternion: q } = poseAt(recording, index, elapsed.current);
+    g.position.set(...position);
+    g.quaternion.set(q.x, q.y, q.z, q.w);
   });
 
+  const q = start.quaternion;
   return (
-    <RigidBody
-      ref={body}
-      colliders={false}
-      ccd
-      position={start.position}
-      rotation={start.rotation}
-      restitution={0.3}
-      friction={0.8}
-      linearDamping={0.3}
-      angularDamping={0.3}
-    >
-      <CuboidCollider args={[DIE_SIZE / 2, DIE_SIZE / 2, DIE_SIZE / 2]} />
-      <Die sides={sides} />
-    </RigidBody>
+    <group ref={group} position={start.position} quaternion={[q.x, q.y, q.z, q.w]}>
+      <Die sides={recording.sides[index]!} />
+    </group>
   );
 }
