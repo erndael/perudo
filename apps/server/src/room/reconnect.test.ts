@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { secureRng } from "../deps.ts";
+import { createRegistry } from "../registry.ts";
 import type { Room } from "./index.ts";
 import { fakeClock, joinAs, newRoom, rolls, scriptedRng } from "./test-helpers.ts";
 
@@ -134,5 +136,39 @@ describe("disconnected players", () => {
       expect(result).toMatchObject({ ok: false, error: { code: "not-connected" } });
       expect(views).toEqual(before);
     }
+  });
+});
+
+describe("a Room everyone has disconnected from", () => {
+  const MINUTE = 60_000;
+
+  it("expires 10 minutes after the last person disconnects, so their tokens stop working", () => {
+    const clock = fakeClock();
+    const registry = createRegistry({ rng: secureRng, clock });
+    const code = registry.create().code;
+    const ana = joinWithToken(registry.get(code)!, "Ana");
+    const ben = joinWithToken(registry.get(code)!, "Ben");
+    registry.get(code)!.dispatch({ type: "disconnect", by: ana.id });
+    clock.advance(5 * MINUTE);
+    registry.get(code)!.dispatch({ type: "disconnect", by: ben.id });
+
+    clock.advance(10 * MINUTE - 1);
+    expect(registry.get(code)).toBeDefined();
+    clock.advance(1);
+    expect(registry.get(code)).toBeUndefined();
+  });
+
+  it("is kept if someone reconnects in time", () => {
+    const clock = fakeClock();
+    const registry = createRegistry({ rng: secureRng, clock });
+    const room = registry.create();
+    const ana = joinWithToken(room, "Ana");
+    room.dispatch({ type: "disconnect", by: ana.id });
+    clock.advance(9 * MINUTE);
+
+    room.dispatch({ type: "reconnect", token: ana.token });
+    clock.advance(60 * MINUTE);
+
+    expect(registry.get(room.code)).toBe(room);
   });
 });
