@@ -6,12 +6,15 @@ import { Suspense, type ReactNode } from "react";
  * narrow ones (see `.dice-stage` in styles.css), behind the HTML layer, with camera and lights.
  * Nothing in it is interactive (pointer-events: none), so HTML controls on top stay usable.
  * Put dice scenes inside. No live physics runs here: throws are simulated beforehand and played back (ThrownDice).
+ * `frameloop="demand"` renders only when the scene changes or a `useFrame` calls `invalidate()`, so a scene
+ * that stops moving stops costing CPU.
  */
-export function DiceStage({ children }: { children: ReactNode }) {
+export function DiceStage({ children, frameloop = "always" }: { children: ReactNode; frameloop?: "always" | "demand" }) {
   return (
     <div className="dice-stage" aria-hidden="true">
       <Canvas
         style={{ pointerEvents: "none" }}
+        frameloop={frameloop}
         shadows="percentage"
         dpr={[1, 2]}
         camera={{ position: [0, 10.5, 5.5], fov: 40 }}

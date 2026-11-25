@@ -52,16 +52,20 @@ function TrayFloor() {
 /** One die following its recorded track, already showing the Faces it will land with. */
 function PlayedBackDie({ recording, index }: { recording: ThrowRecording; index: number }) {
   const group = useRef<Group>(null);
-  const elapsed = useRef(0);
-  const start = recording.tracks[index]![0]!;
+  const elapsed = useRef<number | null>(null);
+  const track = recording.tracks[index]!;
+  const start = track[0]!;
+  const duration = (track.length - 1) * recording.stepSeconds;
 
-  useFrame((_, delta) => {
+  useFrame(({ invalidate }, delta) => {
     const g = group.current;
     if (!g) return;
-    elapsed.current += Math.min(delta, MAX_FRAME_SECONDS);
+    // The first frame's delta includes the time spent before the throw was ready: start the clock from here.
+    elapsed.current = elapsed.current === null ? 0 : elapsed.current + Math.min(delta, MAX_FRAME_SECONDS);
     const { position, quaternion: q } = poseAt(recording, index, elapsed.current);
     g.position.set(...position);
     g.quaternion.set(q.x, q.y, q.z, q.w);
+    if (elapsed.current < duration) invalidate(); // keep drawing until the die has landed (the canvas renders on demand)
   });
 
   const q = start.quaternion;
