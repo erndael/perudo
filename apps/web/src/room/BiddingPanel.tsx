@@ -14,7 +14,10 @@ export function formatBid({ count, face }: Bid): string {
   return `${count} × ${faceName(face)}`;
 }
 
-/** Whose Turn it is, the current Round's Bids, and on your Turn the Bid controls and Dudo (once there is a Bid). */
+/**
+ * Whose Turn it is, the current Round's Bids, and on your Turn the Bid controls, plus Dudo and
+ * Calza once there is a Bid (Calza only while the server says it is available this Round).
+ */
 export function BiddingPanel({ view, send }: { view: RoomView; send(message: ClientMessage): void }) {
   const game = view.game;
   if (!game) return null;
@@ -44,6 +47,11 @@ export function BiddingPanel({ view, send }: { view: RoomView; send(message: Cli
           <button type="button" onClick={() => send({ type: "dudo" })}>
             Dudo
           </button>
+          {game.calzaAvailable && (
+            <button type="button" onClick={() => send({ type: "calza" })}>
+              Calza
+            </button>
+          )}
         </div>
       )}
     </section>

@@ -1,4 +1,4 @@
-import { countsToward, dieCount, totalDice, winner, type Game } from "@perudo/engine";
+import { calzaAllowed, countsToward, dieCount, totalDice, winner, type Game } from "@perudo/engine";
 import type { GameView, PlayerId, RevealView, RoomState, RoomView } from "./types.ts";
 
 /** Builds what `viewer` may see. The only place that decides visibility. */
@@ -13,7 +13,8 @@ export function viewFor(state: RoomState, viewer: PlayerId): RoomView {
       waiting: isWaiting(state, id),
       connected,
     })),
-    game: state.game && gameViewFor(state.game, viewer),
+    calzaEnabled: state.calzaEnabled,
+    game: state.game && gameViewFor(state.game, viewer, state.calzaEnabled),
   };
 }
 
@@ -23,7 +24,7 @@ function isWaiting(state: RoomState, id: PlayerId): boolean {
 }
 
 /** Other players' dice must never leave this function outside a reveal (ADR-0001). */
-function gameViewFor(game: Game, viewer: PlayerId): GameView {
+function gameViewFor(game: Game, viewer: PlayerId, calzaEnabled: boolean): GameView {
   const you = game.players.find((p) => p.id === viewer);
   const won = winner(game);
   return {
@@ -33,6 +34,7 @@ function gameViewFor(game: Game, viewer: PlayerId): GameView {
     turn: game.round.turn,
     bids: game.round.bids.map(({ by, count, face }) => ({ by, count, face })),
     palifico: game.round.palifico,
+    calzaAvailable: calzaEnabled && calzaAllowed(game),
     totalDice: totalDice(game),
     players: game.players.map((p) => ({ id: p.id, dieCount: dieCount(game, p.id) })),
     yourDice: you ? [...you.dice] : null,

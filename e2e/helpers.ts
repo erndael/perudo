@@ -63,6 +63,11 @@ export async function callDudo(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Dudo" }).click();
 }
 
+/** Calls Calza on the current Bid, on the player's Turn. */
+export async function callCalza(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Calza" }).click();
+}
+
 /** The reveal's banner: who called what, the actual count, and who loses a die. */
 export function revealBanner(page: Page) {
   return page.getByRole("region", { name: "Reveal" }).locator(".banner");

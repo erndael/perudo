@@ -173,6 +173,7 @@ describe("starting the next Round", () => {
         turn: ben,
         bids: [],
         palifico: false,
+        calzaAvailable: true,
         totalDice: 14,
         players: [
           { id: ana, dieCount: 5 },

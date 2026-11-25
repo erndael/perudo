@@ -18,4 +18,4 @@ export {
   winner,
 } from "./game.ts";
 export type { RoundOutcome } from "./resolution.ts";
-export { actualCount, callDudo, countsToward } from "./resolution.ts";
+export { actualCount, callCalza, callDudo, calzaAllowed, countsToward } from "./resolution.ts";

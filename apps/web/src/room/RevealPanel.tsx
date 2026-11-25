@@ -1,13 +1,16 @@
 import type { RevealView, RoomView } from "@perudo/server/protocol";
 import { formatBid } from "./BiddingPanel.tsx";
 
-/** "Ana called Dudo on Cat's 4 × 6. There were 3. Cat loses a die." */
+/**
+ * "Ana called Dudo on Cat's 4 × 6. There were 3. Cat loses a die."
+ * "Cat called Calza on Ben's 8 × 4. There were exactly 8. Cat gains a die." (or "already has 5 dice.")
+ */
 export function outcomeBanner(reveal: RevealView, nickname: (id: string) => string): string {
-  const { caller, bid, actualCount, dieChange } = reveal.outcome;
+  const { call, caller, bid, actualCount, dieChange } = reveal.outcome;
   const count = actualCount === bid.count ? `exactly ${actualCount}` : String(actualCount);
-  const change = dieChange.delta < 0 ? "loses a die" : "gains a die";
+  const change = dieChange.delta < 0 ? "loses a die" : dieChange.delta > 0 ? "gains a die" : "already has 5 dice";
   return (
-    `${nickname(caller)} called Dudo on ${nickname(bid.by)}'s ${formatBid(bid)}. ` +
+    `${nickname(caller)} called ${call === "calza" ? "Calza" : "Dudo"} on ${nickname(bid.by)}'s ${formatBid(bid)}. ` +
     `There ${actualCount === 1 ? "was" : "were"} ${count}. ${nickname(dieChange.player)} ${change}.`
   );
 }

@@ -139,6 +139,7 @@ describe("dice visibility", () => {
       turn: ana,
       bids: [],
       palifico: false,
+      calzaAvailable: true,
       totalDice: 15,
       players: [
         { id: ana, dieCount: 5 },

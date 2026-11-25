@@ -37,7 +37,14 @@ export interface Room {
 }
 
 export function createRoom(opts: { code: string; rng: Rng; clock: Clock; newToken: () => string }): Room {
-  const state: RoomState = { code: opts.code, people: [], hostId: null, nextPlayerNumber: 1, game: null };
+  const state: RoomState = {
+    code: opts.code,
+    people: [],
+    hostId: null,
+    nextPlayerNumber: 1,
+    calzaEnabled: true,
+    game: null,
+  };
   const ctx = { rng: opts.rng, clock: opts.clock, newToken: opts.newToken };
   let emptySince: number | null = opts.clock();
 

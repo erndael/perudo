@@ -1,4 +1,5 @@
 import { BiddingPanel } from "./BiddingPanel.tsx";
+import { CalzaOption } from "./CalzaOption.tsx";
 import { GameOverPanel } from "./GameOverPanel.tsx";
 import { GamePanel } from "./GamePanel.tsx";
 import { HostControls } from "./HostControls.tsx";
@@ -43,6 +44,7 @@ export function RoomPage({ code }: { code: string }) {
         Share this link: <code>{window.location.href}</code>
       </p>
       <PeopleList view={view} />
+      <CalzaOption view={view} send={send} />
       <HostControls view={view} send={send} />
       <GameOverPanel view={view} />
       {view.game && <GamePanel game={view.game} you={view.you} />}
