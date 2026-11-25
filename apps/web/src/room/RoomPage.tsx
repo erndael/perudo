@@ -1,12 +1,15 @@
+import { use3D } from "../dice/Dice3D.tsx";
 import { BiddingPanel } from "./BiddingPanel.tsx";
 import { GameOverPanel } from "./GameOverPanel.tsx";
 import { GamePanel } from "./GamePanel.tsx";
 import { HostControls } from "./HostControls.tsx";
 import { KickControls } from "./KickControls.tsx";
+import { nicknameOf } from "./names.ts";
 import { NicknameForm } from "./NicknameForm.tsx";
 import { PeopleList } from "./PeopleList.tsx";
 import { RevealPanel } from "./RevealPanel.tsx";
 import { RoomNotFound } from "./RoomNotFound.tsx";
+import type { RoomView } from "@perudo/server/protocol";
 import { useRoom, type ConnectionStatus } from "./useRoom.ts";
 import { useRoomExists } from "./useRoomExists.ts";
 
@@ -20,6 +23,8 @@ const STATUS_TEXT: Partial<Record<ConnectionStatus, string>> = {
 export function RoomPage({ code }: { code: string }) {
   const existence = useRoomExists(code);
   const { view, status, error, join, send, leave } = useRoom(code);
+  // Shared by the Game and the reveal: while the 3D dice run, the HTML dice lists are only visually hidden.
+  const [threeD, fail3D] = use3D();
 
   if (existence.state === "missing") return <RoomNotFound message={existence.message} />;
   // The Room can expire between opening the link and joining.
@@ -54,8 +59,10 @@ export function RoomPage({ code }: { code: string }) {
       <HostControls view={view} send={send} />
       <KickControls view={view} send={send} />
       <GameOverPanel view={view} />
-      {view.game && <GamePanel game={view.game} you={view.you} />}
-      <RevealPanel view={view} />
+      {view.game && (
+        <GamePanel game={view.game} you={view.you} nickname={nickname(view)} threeD={threeD} onFail3D={fail3D} />
+      )}
+      <RevealPanel view={view} diceIn3D={threeD} />
       <BiddingPanel view={view} send={send} />
       {error && <p role="alert">{error.message}</p>}
       <p>
@@ -65,4 +72,8 @@ export function RoomPage({ code }: { code: string }) {
       </p>
     </main>
   );
+}
+
+function nickname(view: RoomView) {
+  return (id: string) => nicknameOf(view, id);
 }
