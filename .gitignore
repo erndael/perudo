@@ -3,3 +3,6 @@ dist/
 test-results/
 playwright-report/
 *.tsbuildinfo
+
+# Local issue tracker (see docs/agents/issue-tracker.md); not published.
+.scratch/
