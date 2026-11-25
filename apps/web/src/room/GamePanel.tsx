@@ -7,6 +7,11 @@ export function GamePanel({ game }: { game: GameView }) {
   return (
     <section className="game">
       <h2>Round {game.round}</h2>
+      {game.palifico && (
+        <p role="status" className="palifico">
+          <strong>Palifico Round</strong>: Pacos aren't wild, and every Bid keeps the opening Bid's Face.
+        </p>
+      )}
       <p>Total dice in play: {game.totalDice}</p>
       {game.yourDice ? (
         <>
