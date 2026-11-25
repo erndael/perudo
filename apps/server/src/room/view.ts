@@ -1,4 +1,4 @@
-import { calzaAllowed, countsToward, dieCount, isPalifico, totalDice, winner, type Game } from "@perudo/engine";
+import { calzaBlockedBy, countsToward, dieCount, isPalifico, totalDice, winner, type Game } from "@perudo/engine";
 import type { GameView, PlayerId, RevealView, RoomState, RoomView } from "./types.ts";
 
 /** Builds what `viewer` may see. The only place that decides visibility. */
@@ -34,7 +34,7 @@ function gameViewFor(game: Game, viewer: PlayerId): GameView {
     turn: game.round.turn,
     bids: game.round.bids.map(({ by, count, face }) => ({ by, count, face })),
     palifico: isPalifico(game),
-    calzaAvailable: calzaAllowed(game),
+    calzaBlockedBy: calzaBlockedBy(game),
     totalDice: totalDice(game),
     players: game.players.map((p) => ({ id: p.id, dieCount: dieCount(game, p.id) })),
     yourDice: you ? [...you.dice] : null,

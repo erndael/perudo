@@ -102,7 +102,7 @@ describe("calling Calza", () => {
     mustAccept(t.room, { type: "bid", by: ben, count: 12, face: 2 });
     mustAccept(t.room, { type: "bid", by: cat, count: 13, face: 2 });
     mustAccept(t.room, { type: "bid", by: ana, count: 14, face: 2 });
-    expect(t.room.views().get(ben)?.game?.calzaAvailable).toBe(true);
+    expect(t.room.views().get(ben)?.game?.calzaBlockedBy).toBeNull();
 
     const { result, views } = t.room.dispatch({ type: "calza", by: ben });
 
@@ -234,11 +234,11 @@ describe("when Calza is unavailable", () => {
     for (let dice = 5; dice > 1; dice--) t.roundLostBy(ana);
     mustAccept(t.room, { type: "bid", by: ana, count: 3, face: 2 });
     const before = t.room.views();
-    expect(before.get(ben)?.game?.calzaAvailable).toBe(false);
+    expect(before.get(ben)?.game?.calzaBlockedBy).toBe("palifico");
 
     const { result, views } = t.room.dispatch({ type: "calza", by: ben });
 
-    expect(result).toMatchObject({ ok: false, error: { code: "calza-unavailable" } });
+    expect(result).toMatchObject({ ok: false, error: { code: "calza-unavailable", message: "Calza isn't allowed in a Palifico Round." } });
     expect(views).toEqual(before);
   });
 
@@ -247,11 +247,11 @@ describe("when Calza is unavailable", () => {
     const [ana, ben] = t.ids as [PlayerId, PlayerId];
     mustAccept(t.room, { type: "bid", by: ana, count: 10, face: 2 });
     const before = t.room.views();
-    expect(before.get(ben)?.game?.calzaAvailable).toBe(false);
+    expect(before.get(ben)?.game?.calzaBlockedBy).toBe("two-players");
 
     const { result, views } = t.room.dispatch({ type: "calza", by: ben });
 
-    expect(result).toMatchObject({ ok: false, error: { code: "calza-unavailable" } });
+    expect(result).toMatchObject({ ok: false, error: { code: "calza-unavailable", message: "Calza isn't allowed with only 2 players left." } });
     expect(views).toEqual(before);
   });
 
@@ -265,11 +265,11 @@ describe("when Calza is unavailable", () => {
     const caller = t.game().turn;
     expect([ana, cat]).toContain(caller);
     const before = t.room.views();
-    expect(before.get(caller)?.game?.calzaAvailable).toBe(false);
+    expect(before.get(caller)?.game?.calzaBlockedBy).toBe("two-players");
 
     const { result, views } = t.room.dispatch({ type: "calza", by: caller });
 
-    expect(result).toMatchObject({ ok: false, error: { code: "calza-unavailable" } });
+    expect(result).toMatchObject({ ok: false, error: { code: "calza-unavailable", message: "Calza isn't allowed with only 2 players left." } });
     expect(views).toEqual(before);
   });
 });

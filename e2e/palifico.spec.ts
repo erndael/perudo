@@ -54,6 +54,8 @@ test("dropping to 1 die gives a Palifico Round: indicator, locked Face, Pacos no
   // The Face is locked to 4: only a higher count on 4 is possible.
   await expect(ana.getByText("It's your Turn")).toBeVisible();
   await expect(ana.getByText("The Face is locked to 4.")).toBeVisible();
+  await expect(ana.getByRole("button", { name: "Calza" })).toBeDisabled();
+  await expect(ana.getByText("Calza isn't allowed in a Palifico Round.")).toBeVisible();
   await ana.getByLabel("Count").fill("2");
   await expect(bidButton(ana, 2, "4")).toBeEnabled();
   for (const face of ["2", "3", "5", "6", "Paco"]) await expect(bidButton(ana, 2, face)).toBeDisabled();
