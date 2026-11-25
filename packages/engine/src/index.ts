@@ -20,6 +20,6 @@ export {
   totalDice,
   winner,
 } from "./game.ts";
-export type { RoundOutcome } from "./resolution.ts";
-export { actualCount, callCalza, callDudo, calzaAllowed, countsToward } from "./resolution.ts";
+export type { CalzaBlock, RoundOutcome } from "./resolution.ts";
+export { actualCount, callCalza, callDudo, calzaBlockedBy, countsToward } from "./resolution.ts";
 export { nextInSeatOrder } from "./seats.ts";

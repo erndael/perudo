@@ -56,10 +56,17 @@ export function callDudo(game: Game): Game {
   return { ...game, round: { ...game.round, outcome } };
 }
 
-/** Whether the Game's rules allow Calza this Round: never in a Palifico Round, nor once only 2 players have dice. */
-export function calzaAllowed(game: Game): boolean {
+/** Why the Game's rules forbid Calza this Round. */
+export type CalzaBlock = "palifico" | "two-players";
+
+/**
+ * What stops Calza this Round under the Game's rules, or null if it is allowed: never in a
+ * Palifico Round, nor once only 2 players have dice.
+ */
+export function calzaBlockedBy(game: Game): CalzaBlock | null {
+  if (isPalifico(game)) return "palifico";
   const playersLeft = game.players.filter((p) => dieCount(game, p.id) > 0).length;
-  return !isPalifico(game) && playersLeft > 2;
+  return playersLeft > 2 ? null : "two-players";
 }
 
 /**
@@ -68,7 +75,7 @@ export function calzaAllowed(game: Game): boolean {
  * 0); otherwise the caller loses one. Only the caller's dice change, and the caller opens the
  * next Round. Dice stay as rolled, as for Dudo.
  * Doesn't check that a Bid exists, the Round is still open or Calza is allowed (see
- * `calzaAllowed`): callers check first.
+ * `calzaBlockedBy`): callers check first.
  */
 export function callCalza(game: Game): Game {
   const caller = game.round.turn;

@@ -1,4 +1,4 @@
-import type { Face, Game, PlacedBid, PlayerId, RoundOutcome } from "@perudo/engine";
+import type { CalzaBlock, Face, Game, PlacedBid, PlayerId, RoundOutcome } from "@perudo/engine";
 import type { Clock, Rng } from "../deps.ts";
 
 export type { PlayerId } from "@perudo/engine";
@@ -26,8 +26,6 @@ export interface RoomState {
    */
   hostKey: string | null;
   nextPlayerNumber: number;
-  /** The Room's Calza option (on by default). The Host changes it between Games only. */
-  calzaEnabled: boolean;
   /** The Game in progress, if any. Holds every player's dice: never copy it into a view wholesale. */
   game: Game | null;
   /**
@@ -64,8 +62,6 @@ export type RoomErrorCode =
   | "round-in-progress"
   | "game-over"
   | "calza-unavailable"
-  | "calza-disabled"
-  | "invalid-option"
   | "not-in-room"
   | "invalid-player";
 
@@ -98,8 +94,6 @@ export interface RoomView {
     waiting: boolean;
     connected: boolean;
   }[];
-  /** Whether Calza is switched on for this Room (the Host's option; on by default). */
-  calzaEnabled: boolean;
   /** The Game in progress, or null before the first Game. */
   game: GameView | null;
   /** Nicknames of people who left the Room (or were kicked) but still appear in the Game. */
@@ -141,8 +135,8 @@ export interface GameView {
   bids: PlacedBid[];
   /** Whether this is a Palifico Round (changes which Bids are legal; see engine `BidRules`). */
   palifico: boolean;
-  /** Whether Calza may be called this Round: the Room option is on, not a Palifico Round, more than 2 players left. */
-  calzaAvailable: boolean;
+  /** What forbids Calza this Round ("palifico", "two-players"), or null if it may be called (on your Turn, once there is a Bid). */
+  calzaBlockedBy: CalzaBlock | null;
   /** The viewer's own dice this Round, as rolled; null if the viewer isn't playing in this Game. */
   yourDice: Face[] | null;
   /** Every player's dice and the Round outcome: once the Round has resolved ("reveal", and "over" after a final Dudo). */

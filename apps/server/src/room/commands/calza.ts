@@ -1,6 +1,11 @@
-import { calzaAllowed, callCalza } from "@perudo/engine";
+import { calzaBlockedBy, callCalza, type CalzaBlock } from "@perudo/engine";
 import { checkTurn } from "../turn.ts";
 import { reject, type CommandResult, type PlayerId, type RoomState } from "../types.ts";
+
+const BLOCKED_MESSAGE: Record<CalzaBlock, string> = {
+  palifico: "Calza isn't allowed in a Palifico Round.",
+  "two-players": "Calza isn't allowed with only 2 players left.",
+};
 
 export interface CalzaCommand {
   type: "calza";
@@ -11,10 +16,8 @@ export interface CalzaCommand {
 export function calza(state: RoomState, command: CalzaCommand): CommandResult {
   const turn = checkTurn(state, command.by);
   if (!turn.ok) return turn;
-  if (!state.calzaEnabled) return reject("calza-disabled", "Calza is switched off in this Room.");
-  if (!calzaAllowed(turn.game)) {
-    return reject("calza-unavailable", "Calza isn't allowed in a Palifico Round or with only 2 players left.");
-  }
+  const blocked = calzaBlockedBy(turn.game);
+  if (blocked) return reject("calza-unavailable", BLOCKED_MESSAGE[blocked]);
   if (turn.game.round.bids.length === 0) return reject("no-bid", "There is no Bid to call Calza on yet.");
   state.game = callCalza(turn.game);
   return { ok: true };

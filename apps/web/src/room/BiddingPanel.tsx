@@ -1,15 +1,21 @@
 import { useState } from "react";
-import { bidRules, isLegalBid, PACO, type BidRules, type Face } from "@perudo/engine";
+import { bidRules, isLegalBid, PACO, type BidRules, type CalzaBlock, type Face } from "@perudo/engine";
 import type { ClientMessage, GameView, RoomView } from "@perudo/server/protocol";
 import { faceName, formatBid } from "./format.ts";
 import { nicknamesIn } from "./names.ts";
+
+/** Why the Calza button is disabled, from the server's view of the Round. */
+const CALZA_BLOCKED: Record<CalzaBlock, string> = {
+  palifico: "Calza isn't allowed in a Palifico Round.",
+  "two-players": "Calza isn't allowed with only 2 players left.",
+};
 
 /** In the order the Bid buttons show them: Faces by rank, Pacos last. */
 const FACES: Face[] = [2, 3, 4, 5, 6, PACO];
 
 /**
  * Whose Turn it is, the current Round's Bids, and on your Turn the Bid controls, plus Dudo and
- * Calza once there is a Bid (Calza only while the server says it is available this Round).
+ * Calza once there is a Bid (Calza disabled, with the reason, when the server says this Round forbids it).
  */
 export function BiddingPanel({ view, send }: { view: RoomView; send(message: ClientMessage): void }) {
   const game = view.game;
@@ -40,10 +46,18 @@ export function BiddingPanel({ view, send }: { view: RoomView; send(message: Cli
           <button type="button" onClick={() => send({ type: "dudo" })}>
             Dudo
           </button>
-          {game.calzaAvailable && (
-            <button type="button" onClick={() => send({ type: "calza" })}>
-              Calza
-            </button>
+          <button
+            type="button"
+            disabled={game.calzaBlockedBy !== null}
+            aria-describedby={game.calzaBlockedBy ? "calza-blocked" : undefined}
+            onClick={() => send({ type: "calza" })}
+          >
+            Calza
+          </button>
+          {game.calzaBlockedBy && (
+            <span id="calza-blocked" className="hint">
+              {CALZA_BLOCKED[game.calzaBlockedBy]}
+            </span>
           )}
         </div>
       )}
