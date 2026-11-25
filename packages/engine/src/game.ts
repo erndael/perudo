@@ -1,6 +1,7 @@
 import type { PlacedBid } from "./bidding.ts";
 import { rollDice, type Face, type Rng } from "./dice.ts";
 import type { RoundOutcome } from "./resolution.ts";
+import { nextInSeatOrder } from "./seats.ts";
 
 export type PlayerId = string;
 
@@ -97,13 +98,8 @@ export function isPalifico(game: Game): boolean {
  * Round's die change (see `dieCount`). Falls back to `candidate` if nobody has dice.
  */
 export function openerFrom(game: Game, candidate: PlayerId): PlayerId {
-  const seat = game.players.findIndex((p) => p.id === candidate);
-  const n = game.players.length;
-  for (let step = 0; step < n; step++) {
-    const p = game.players[(seat + step) % n]!;
-    if (dieCount(game, p.id) > 0) return p.id;
-  }
-  return candidate;
+  if (dieCount(game, candidate) > 0) return candidate;
+  return nextInSeatOrder(game.players, candidate, (p) => dieCount(game, p.id) > 0)?.id ?? candidate;
 }
 
 /**

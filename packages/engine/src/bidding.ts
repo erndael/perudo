@@ -1,5 +1,6 @@
 import type { Face } from "./dice.ts";
 import { isPalifico, totalDice, type Game, type PlayerId } from "./game.ts";
+import { nextInSeatOrder } from "./seats.ts";
 
 /** A claim that at least `count` dice, across all players, show `face`. */
 export interface Bid {
@@ -70,17 +71,7 @@ export function placeBid(game: Game, bid: Bid): Game {
     round: {
       ...game.round,
       bids: [...game.round.bids, { by, count: bid.count, face: bid.face }],
-      turn: nextSeatWithDice(game, by),
+      turn: nextInSeatOrder(game.players, by, (p) => p.dice.length > 0)?.id ?? by,
     },
   };
-}
-
-/** The next player after `id` in Seat order (wrapping round) who still has dice. */
-function nextSeatWithDice(game: Game, id: PlayerId): PlayerId {
-  const seat = game.players.findIndex((p) => p.id === id);
-  for (let step = 1; step <= game.players.length; step++) {
-    const next = game.players[(seat + step) % game.players.length]!;
-    if (next.dice.length > 0) return next.id;
-  }
-  return id;
 }

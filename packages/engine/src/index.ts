@@ -21,3 +21,4 @@ export {
 } from "./game.ts";
 export type { RoundOutcome } from "./resolution.ts";
 export { actualCount, callCalza, callDudo, calzaAllowed, countsToward } from "./resolution.ts";
+export { nextInSeatOrder } from "./seats.ts";
