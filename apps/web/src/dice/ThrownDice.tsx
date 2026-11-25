@@ -1,6 +1,6 @@
 import type { Face } from "@perudo/engine";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Group } from "three";
 import { Die } from "./Die.tsx";
 import { poseAt, simulateThrow, TRAY, type ThrowRecording } from "./simulateThrow.ts";
@@ -68,9 +68,13 @@ function PlayedBackDie({ recording, index }: { recording: ThrowRecording; index:
     if (elapsed.current < duration) invalidate(); // keep drawing until the die has landed (the canvas renders on demand)
   });
 
-  const q = start.quaternion;
+  // Stable starting props, so a re-render mid-throw never snaps the die back to its starting pose.
+  const startQuaternion = useMemo(() => {
+    const q = start.quaternion;
+    return [q.x, q.y, q.z, q.w] as const;
+  }, [start]);
   return (
-    <group ref={group} position={start.position} quaternion={[q.x, q.y, q.z, q.w]}>
+    <group ref={group} position={start.position} quaternion={startQuaternion}>
       <Die sides={recording.sides[index]!} />
     </group>
   );
