@@ -22,6 +22,34 @@ test("a player creates a Room and friends join it by link", async ({ browser }) 
   await expect(people(cat)).toHaveText([/^Ana\s*Host$/, /^Ben$/, /^Cat\s*You$/]);
 });
 
+test("a friend joins by typing the Room code on the home page", async ({ browser }) => {
+  const ana = await newPlayer(browser);
+  const link = await createRoom(ana, "Ana");
+  const code = link.split("/r/")[1]!;
+
+  const ben = await newPlayer(browser);
+  await ben.goto("/");
+  await ben.getByLabel("Room code").fill(` ${code.toLowerCase()} `);
+  await ben.getByRole("button", { name: "Join Room" }).click();
+  await expect(ben).toHaveURL(new RegExp(`/r/${code}$`));
+  await enterNickname(ben, "Ben");
+
+  await expect(people(ben)).toHaveText([/^Ana\s*Host$/, /^Ben\s*You$/]);
+});
+
+test("a friend joins by pasting the Room link into the code box", async ({ browser }) => {
+  const ana = await newPlayer(browser);
+  const link = await createRoom(ana, "Ana");
+
+  const ben = await newPlayer(browser);
+  await ben.goto("/");
+  await ben.getByLabel("Room code").fill(link);
+  await ben.getByRole("button", { name: "Join Room" }).click();
+  await enterNickname(ben, "Ben");
+
+  await expect(people(ben)).toHaveText([/^Ana\s*Host$/, /^Ben\s*You$/]);
+});
+
 test("the person who created the Room is Host, even if a friend joins before them", async ({ browser }) => {
   const ana = await newPlayer(browser);
   const link = await openNewRoom(ana);

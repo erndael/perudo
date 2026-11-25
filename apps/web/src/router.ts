@@ -18,3 +18,11 @@ export function navigate(path: string): void {
 export function roomCodeFromPath(pathname: string): string | null {
   return /^\/r\/([A-Za-z0-9]+)\/?$/.exec(pathname)?.[1]?.toUpperCase() ?? null;
 }
+
+/** What someone typed or pasted to join a Room: a code (any case, spaces/dashes ignored) or a Room link. */
+export function roomCodeFromInput(input: string): string | null {
+  const text = input.trim();
+  const fromLink = /\/r\/([^/?#\s]+)\/?(?:[?#].*)?$/.exec(text)?.[1];
+  const code = (fromLink ?? (text.includes("/") ? "" : text.replace(/[\s-]/g, ""))).toUpperCase();
+  return /^[A-Z0-9]+$/.test(code) ? code : null;
+}
