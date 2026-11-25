@@ -8,6 +8,11 @@ export function GamePanel({ game, you }: { game: GameView; you: string }) {
   return (
     <section className="game">
       <h2>Round {game.round}</h2>
+      {game.palifico && (
+        <p role="status" className="palifico">
+          <strong>Palifico Round</strong>: Pacos aren't wild, and every Bid keeps the opening Bid's Face.
+        </p>
+      )}
       <p>Total dice in play: {game.totalDice}</p>
       {eliminated && <p className="eliminated">You're Eliminated. You can keep watching the Game.</p>}
       {game.yourDice ? (

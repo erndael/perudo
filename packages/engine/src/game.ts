@@ -26,7 +26,10 @@ export interface Round {
   turn: PlayerId;
   /** Every Bid made this Round, oldest first. The last one is the current Bid. */
   bids: PlacedBid[];
-  /** A Palifico Round (see `BidRules.palifico`). Never set yet: ticket 06 triggers it. */
+  /**
+   * A Palifico Round (see `BidRules.palifico`; Pacos aren't wild): the Round right after a
+   * player dropped from 2 dice to 1, opened by them. See `startNextRound`.
+   */
   palifico: boolean;
   /** How the Round ended: null while it is open (bidding), set once resolved (the reveal). */
   outcome: RoundOutcome | null;
@@ -54,17 +57,26 @@ export function startGame(playerIds: readonly PlayerId[], rng: Rng): Game {
  * Starts the next Round after a resolved one: applies the outcome's die change, rolls fresh
  * dice for every player in Seat order (see `rollDice`; Eliminated players roll none), and
  * gives the opening Turn to the outcome's `nextOpener`, or to the next Seat with dice if they
- * have none left (see `openerFrom`). Doesn't check that the Round has an outcome or that the
- * Game isn't over: callers check first.
+ * have none left (see `openerFrom`). If the die change took a player from 2 dice to 1
+ * (whatever the call), the new Round is a Palifico Round and that player opens it.
+ * Doesn't check that the Round has an outcome or that the Game isn't over: callers check first.
  */
 export function startNextRound(game: Game, rng: Rng): Game {
   const outcome = game.round.outcome!;
-  const opener = openerFrom(game, outcome.nextOpener);
+  const palifico = droppedToOneDie(game);
+  const opener = openerFrom(game, palifico ?? outcome.nextOpener);
   const players = game.players.map((p) => ({ id: p.id, dice: rollDice(dieCount(game, p.id), rng) }));
   return {
     ...game,
     players,
-    round: { number: game.round.number + 1, opener, turn: opener, bids: [], palifico: false, outcome: null },
+    round: {
+      number: game.round.number + 1,
+      opener,
+      turn: opener,
+      bids: [],
+      palifico: palifico !== null,
+      outcome: null,
+    },
   };
 }
 
@@ -91,6 +103,13 @@ export function openerFrom(game: Game, candidate: PlayerId): PlayerId {
 export function winner(game: Game): PlayerId | null {
   const left = game.players.filter((p) => dieCount(game, p.id) > 0);
   return left.length === 1 ? left[0]!.id : null;
+}
+
+/** The player whose die change in this resolved Round took them from 2 dice to 1, if any. */
+function droppedToOneDie(game: Game): PlayerId | null {
+  const { player } = game.round.outcome!.dieChange;
+  const before = game.players.find((p) => p.id === player)?.dice.length;
+  return before === 2 && dieCount(game, player) === 1 ? player : null;
 }
 
 /** How many dice `id` has, including the die change of a resolved Round. 0 for someone not playing. */

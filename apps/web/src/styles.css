@@ -53,6 +53,11 @@ label {
   margin-right: 0.5rem;
 }
 
+.game .palifico {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid #7c3aed;
+}
+
 .bidding .turn {
   font-weight: bold;
 }
