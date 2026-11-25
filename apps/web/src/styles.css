@@ -1,0 +1,27 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  max-width: 40rem;
+  margin: 3rem auto;
+  padding: 0 1rem;
+}
+
+.people .badge {
+  margin-left: 0.5rem;
+  font-size: 0.8em;
+  opacity: 0.75;
+}
+
+label {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-right: 0.5rem;
+}
