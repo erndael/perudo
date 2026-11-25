@@ -44,6 +44,7 @@ export function createRoom(opts: { code: string; rng: Rng; clock: Clock; newToke
     nextPlayerNumber: 1,
     calzaEnabled: true,
     game: null,
+    departed: [],
   };
   const ctx = { rng: opts.rng, clock: opts.clock, newToken: opts.newToken };
   let emptySince: number | null = opts.clock();

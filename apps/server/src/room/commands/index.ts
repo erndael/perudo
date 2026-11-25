@@ -6,6 +6,8 @@ import { calza, type CalzaCommand } from "./calza.ts";
 import { disconnect, type DisconnectCommand } from "./disconnect.ts";
 import { dudo, type DudoCommand } from "./dudo.ts";
 import { join, type JoinCommand } from "./join.ts";
+import { kick, type KickCommand } from "./kick.ts";
+import { leave, type LeaveCommand } from "./leave.ts";
 import { reconnect, type ReconnectCommand } from "./reconnect.ts";
 import { setCalza, type SetCalzaCommand } from "./set-calza.ts";
 import { startGame, type StartGameCommand } from "./start-game.ts";
@@ -22,7 +24,9 @@ export type RoomCommand =
   | DudoCommand
   | StartNextRoundCommand
   | CalzaCommand
-  | SetCalzaCommand;
+  | SetCalzaCommand
+  | LeaveCommand
+  | KickCommand;
 
 type Handler<C> = (state: RoomState, command: C, ctx: RoomContext) => CommandResult;
 
@@ -37,4 +41,6 @@ export const handlers: { [K in RoomCommand["type"]]: Handler<Extract<RoomCommand
   "start-next-round": startNextRound,
   calza,
   "set-calza": setCalza,
+  leave,
+  kick,
 };

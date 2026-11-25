@@ -42,6 +42,15 @@ body {
   font-weight: bold;
 }
 
+.kick-controls h3 {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.kick-controls button {
+  margin-right: 0.5rem;
+}
+
 .hint {
   opacity: 0.75;
 }
@@ -81,6 +90,8 @@ label {
   padding: 0.5rem 0.75rem;
   border-left: 4px solid #d97706;
   font-weight: bold;
+  /* Stays readable where it overlaps the 3D reveal table. */
+  background: Canvas;
 }
 
 .reveal .revealed-player {
@@ -106,7 +117,8 @@ label {
   position: fixed;
   inset: auto 0 0;
   height: var(--dice-stage-height);
-  z-index: 0;
+  /* Below the page's own text: the stage sits inside .page's stacking context, where z-index 0 would paint over it. */
+  z-index: -1;
   pointer-events: none;
 }
 

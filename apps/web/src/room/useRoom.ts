@@ -7,6 +7,9 @@ import type { ClientMessage, PlayerId, RoomView, ServerMessage, WireError } from
 
 /** WebSocket close code the server uses when a newer connection (another tab) took this Seat. */
 const REPLACED = 4000;
+/** Close codes when this player left the Room or the Host kicked them: their Seat is gone. */
+const LEFT = 4001;
+const KICKED = 4002;
 const RETRY_MS = 1000;
 
 export type ConnectionStatus =
@@ -16,7 +19,11 @@ export type ConnectionStatus =
   | "reconnecting"
   | "connected"
   /** The Seat was taken over by another tab; this one stops. */
-  | "replaced";
+  | "replaced"
+  /** Left the Room (Seat gone): show the nickname form again. */
+  | "left"
+  /** Kicked by the Host (Seat gone): show the nickname form again. */
+  | "kicked";
 
 export interface RoomConnection {
   /** Latest snapshot; null until joined. Kept while reconnecting. */
@@ -27,6 +34,8 @@ export interface RoomConnection {
   error: WireError | null;
   join(nickname: string): void;
   send(message: ClientMessage): void;
+  /** Leave the Room for good: the Seat and the reconnect token are given up. */
+  leave(): void;
 }
 
 function socketUrl(): string {
@@ -108,6 +117,12 @@ export function useRoom(code: string): RoomConnection {
         if (disposed || socket.current !== ws) return; // replaced by a newer socket, or unmounted
         socket.current = null;
         if (event.code === REPLACED) return setStatus("replaced");
+        if (event.code === LEFT || event.code === KICKED) {
+          tokens.forget(code);
+          setView(null);
+          setPlayerId(null);
+          return setStatus(event.code === LEFT ? "left" : "kicked");
+        }
         const token = tokens.load(code);
         if (!token) return setStatus("idle");
         setStatus("reconnecting");
@@ -133,5 +148,7 @@ export function useRoom(code: string): RoomConnection {
 
   const join = useCallback((nickname: string) => connect.current({ type: "join", code, nickname }), [code]);
 
-  return { view, playerId, status, error, join, send };
+  const leave = useCallback(() => send({ type: "leave" }), [send]);
+
+  return { view, playerId, status, error, join, send, leave };
 }

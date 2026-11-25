@@ -16,6 +16,11 @@ export interface GamePlayer {
    * count while the Round is open; once it has an outcome use `dieCount` (it includes the change).
    */
   dice: Face[];
+  /**
+   * Left the Room (or was kicked) during this Game: Eliminated, whatever `dice` holds. Their
+   * dice are kept only while a reveal is showing them (see `leaveGame`).
+   */
+  departed?: true;
 }
 
 export interface Round {
@@ -112,9 +117,14 @@ function droppedToOneDie(game: Game): PlayerId | null {
   return before === 2 && dieCount(game, player) === 1 ? player : null;
 }
 
-/** How many dice `id` has, including the die change of a resolved Round. 0 for someone not playing. */
+/**
+ * How many dice `id` has, including the die change of a resolved Round. 0 for someone not
+ * playing or who has departed (see `leaveGame`).
+ */
 export function dieCount(game: Game, id: PlayerId): number {
-  const dice = game.players.find((p) => p.id === id)?.dice.length ?? 0;
+  const player = game.players.find((p) => p.id === id);
+  if (!player || player.departed) return 0;
+  const dice = player.dice.length;
   const change = game.round.outcome?.dieChange;
   return change?.player === id ? dice + change.delta : dice;
 }

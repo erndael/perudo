@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { isLegalBid, type Bid, type BidRules, type Face } from "@perudo/engine";
 import type { ClientMessage, GameView, RoomView } from "@perudo/server/protocol";
+import { nicknameOf } from "./names.ts";
 
 const FACES: Face[] = [2, 3, 4, 5, 6, 1];
 
@@ -21,7 +22,7 @@ export function formatBid({ count, face }: Bid): string {
 export function BiddingPanel({ view, send }: { view: RoomView; send(message: ClientMessage): void }) {
   const game = view.game;
   if (!game) return null;
-  const nickname = (id: string) => view.people.find((p) => p.id === id)?.nickname ?? "?";
+  const nickname = (id: string) => nicknameOf(view, id);
   const bidding = game.phase === "bidding";
   const yourTurn = bidding && game.turn === view.you;
 

@@ -15,6 +15,7 @@ export function viewFor(state: RoomState, viewer: PlayerId): RoomView {
     })),
     calzaEnabled: state.calzaEnabled,
     game: state.game && gameViewFor(state.game, viewer, state.calzaEnabled),
+    departed: state.departed.map((d) => ({ ...d })),
   };
 }
 
