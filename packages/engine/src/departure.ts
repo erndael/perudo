@@ -8,8 +8,9 @@ import { dieCount, openerFrom, winner, type Game, type PlayerId } from "./game.t
  *   Everyone left re-rolls the same number of dice in Seat order (see `rollDice`), and the
  *   player whose Turn it was opens the new Round, or the next Seat with dice if that was the
  *   departed player (see `openerFrom`). A cancelled Palifico Round is replayed as a Palifico
- *   Round unless the player it was for (its Opener) is the one who left. No re-roll if only one
- *   player has dice left: the Game is over (see `winner`).
+ *   Round opened by the player it is for (`Round.palificoPlayer`), unless they are the one who
+ *   left: then it is replayed as a normal Round, opened as above. No re-roll if only one player
+ *   has dice left: the Game is over (see `winner`).
  * - Round resolved (the reveal): the outcome stands and the reveal keeps showing their dice;
  *   they roll none next Round.
  * - Game already over, or `id` isn't playing: nothing changes.
@@ -28,17 +29,12 @@ export function leaveGame(game: Game, id: PlayerId, rng: Rng): Game {
   };
   if (reveal || !hadDice || winner(departed)) return departed;
 
-  const opener = openerFrom(departed, round.turn);
+  // The Palifico player always opens their Palifico Round, however often it is replayed.
+  const palificoPlayer = round.palificoPlayer === id ? null : round.palificoPlayer;
+  const opener = palificoPlayer ?? openerFrom(departed, round.turn);
   return {
     ...departed,
     players: departed.players.map((p) => (p.id === id ? p : { ...p, dice: rollDice(p.dice.length, rng) })),
-    round: {
-      number: round.number + 1,
-      opener,
-      turn: opener,
-      bids: [],
-      palifico: round.palifico && round.opener !== id,
-      outcome: null,
-    },
+    round: { number: round.number + 1, opener, turn: opener, bids: [], palificoPlayer, outcome: null },
   };
 }

@@ -9,6 +9,7 @@ export { leaveGame } from "./departure.ts";
 export type { Game, GamePlayer, PlayerId, Round } from "./game.ts";
 export {
   dieCount,
+  isPalifico,
   MAX_PLAYERS,
   MIN_PLAYERS,
   openerFrom,

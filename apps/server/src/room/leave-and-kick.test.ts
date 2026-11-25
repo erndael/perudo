@@ -121,16 +121,21 @@ describe("leaving mid-Round with few dice", () => {
    * wrong. Ana opens with it and Ben calls Dudo, `times` times: Ana is down to 5 - `times` dice
    * and the next Round has started (a Palifico Round once she's down to 1).
    */
-  function anaLoses(times: number) {
+  function anaLoses(times: number, others = ["Ben", "Cat"]) {
     const room = newRoom({ rng: scriptedRng(0, ...Array<number>(200).fill(1)) });
-    const [ana, ben, cat] = ["Ana", "Ben", "Cat"].map((n) => joinAs(room, n)) as [PlayerId, PlayerId, PlayerId];
+    const [ana, ben, cat, dan] = ["Ana", ...others].map((n) => joinAs(room, n)) as [
+      PlayerId,
+      PlayerId,
+      PlayerId,
+      PlayerId,
+    ];
     mustAccept(room, { type: "start-game", by: ana });
     for (let i = 0; i < times; i++) {
       mustAccept(room, { type: "bid", by: ana, count: 1, face: 6 });
       mustAccept(room, { type: "dudo", by: ben });
       mustAccept(room, { type: "start-next-round", by: ana });
     }
-    return { room, ana, ben, cat };
+    return { room, ana, ben, cat, dan };
   }
 
   it("doesn't cancel the Round when an Eliminated player leaves", () => {
@@ -144,14 +149,37 @@ describe("leaving mid-Round with few dice", () => {
     expect(views.get(cat)?.hostId).toBe(ben);
   });
 
-  it("replays a cancelled Palifico Round as a Palifico Round", () => {
+  it("replays a cancelled Palifico Round as a Palifico Round, opened by the player it is for", () => {
     const { room, ana, ben, cat } = anaLoses(4);
     expect(room.views().get(ana)?.game).toMatchObject({ palifico: true, opener: ana });
     mustAccept(room, { type: "bid", by: ana, count: 1, face: 2 });
 
     const { views } = room.dispatch({ type: "kick", by: ana, player: cat });
 
-    expect(views.get(ben)?.game).toMatchObject({ round: 6, palifico: true, opener: ben, totalDice: 6 });
+    expect(views.get(ben)?.game).toMatchObject({ round: 6, palifico: true, opener: ana, turn: ana, totalDice: 6 });
+  });
+
+  it("keeps replaying it as Ana's Palifico Round however many times it is cancelled", () => {
+    const { room, ana, ben, cat, dan } = anaLoses(4, ["Ben", "Cat", "Dan"]);
+    mustAccept(room, { type: "bid", by: ana, count: 1, face: 2 });
+    mustAccept(room, { type: "leave", by: cat });
+    mustAccept(room, { type: "bid", by: ana, count: 1, face: 2 });
+    mustAccept(room, { type: "bid", by: ben, count: 2, face: 2 });
+
+    const { views } = room.dispatch({ type: "leave", by: dan });
+
+    expect(views.get(ben)?.game).toMatchObject({ round: 7, palifico: true, opener: ana, turn: ana, totalDice: 6 });
+  });
+
+  it("plays a normal Round when the player it is for leaves a replayed Palifico Round", () => {
+    const { room, ana, ben, cat, dan } = anaLoses(4, ["Ben", "Cat", "Dan"]);
+    mustAccept(room, { type: "bid", by: ana, count: 1, face: 2 });
+    mustAccept(room, { type: "leave", by: cat });
+    mustAccept(room, { type: "bid", by: ana, count: 1, face: 2 });
+
+    const { views } = room.dispatch({ type: "leave", by: ana });
+
+    expect(views.get(dan)?.game).toMatchObject({ round: 7, palifico: false, opener: ben, totalDice: 10 });
   });
 
   it("plays a normal Round instead when the player the Palifico Round was for leaves", () => {

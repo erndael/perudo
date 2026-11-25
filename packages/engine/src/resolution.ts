@@ -1,6 +1,6 @@
 import type { PlacedBid } from "./bidding.ts";
 import type { Face } from "./dice.ts";
-import { dieCount, STARTING_DICE, type Game, type PlayerId } from "./game.ts";
+import { dieCount, isPalifico, STARTING_DICE, type Game, type PlayerId } from "./game.ts";
 
 const PACO: Face = 1;
 
@@ -32,7 +32,7 @@ export function countsToward(face: Face, bidFace: Face, palifico: boolean): bool
 export function actualCount(game: Game, face: Face): number {
   return game.players
     .flatMap((p) => p.dice)
-    .filter((die) => countsToward(die, face, game.round.palifico)).length;
+    .filter((die) => countsToward(die, face, isPalifico(game))).length;
 }
 
 /**
@@ -61,7 +61,7 @@ export function callDudo(game: Game): Game {
 /** Whether the Game's rules allow Calza this Round: never in a Palifico Round, nor once only 2 players have dice. */
 export function calzaAllowed(game: Game): boolean {
   const playersLeft = game.players.filter((p) => dieCount(game, p.id) > 0).length;
-  return !game.round.palifico && playersLeft > 2;
+  return !isPalifico(game) && playersLeft > 2;
 }
 
 /**

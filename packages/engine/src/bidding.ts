@@ -1,5 +1,5 @@
 import type { Face } from "./dice.ts";
-import { totalDice, type Game, type PlayerId } from "./game.ts";
+import { isPalifico, totalDice, type Game, type PlayerId } from "./game.ts";
 
 /** A claim that at least `count` dice, across all players, show `face`. */
 export interface Bid {
@@ -30,7 +30,7 @@ export function bidRulesFor(game: Game): BidRules {
   return {
     current: game.round.bids.at(-1) ?? null,
     totalDice: totalDice(game),
-    palifico: game.round.palifico,
+    palifico: isPalifico(game),
   };
 }
 

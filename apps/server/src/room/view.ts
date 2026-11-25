@@ -1,4 +1,4 @@
-import { calzaAllowed, countsToward, dieCount, totalDice, winner, type Game } from "@perudo/engine";
+import { calzaAllowed, countsToward, dieCount, isPalifico, totalDice, winner, type Game } from "@perudo/engine";
 import type { GameView, PlayerId, RevealView, RoomState, RoomView } from "./types.ts";
 
 /** Builds what `viewer` may see. The only place that decides visibility. */
@@ -34,7 +34,7 @@ function gameViewFor(game: Game, viewer: PlayerId, calzaEnabled: boolean): GameV
     opener: game.round.opener,
     turn: game.round.turn,
     bids: game.round.bids.map(({ by, count, face }) => ({ by, count, face })),
-    palifico: game.round.palifico,
+    palifico: isPalifico(game),
     calzaAvailable: calzaEnabled && calzaAllowed(game),
     totalDice: totalDice(game),
     players: game.players.map((p) => ({ id: p.id, dieCount: dieCount(game, p.id) })),
@@ -46,8 +46,9 @@ function gameViewFor(game: Game, viewer: PlayerId, calzaEnabled: boolean): GameV
 
 /** Everyone's dice, with the counting ones marked. Only once the Round has an outcome (the reveal). */
 function revealViewFor(game: Game): RevealView | null {
-  const { outcome, palifico } = game.round;
+  const { outcome } = game.round;
   if (!outcome) return null;
+  const palifico = isPalifico(game);
   return {
     players: game.players.map((p) => ({
       id: p.id,

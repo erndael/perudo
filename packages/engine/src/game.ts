@@ -32,10 +32,11 @@ export interface Round {
   /** Every Bid made this Round, oldest first. The last one is the current Bid. */
   bids: PlacedBid[];
   /**
-   * A Palifico Round (see `BidRules.palifico`; Pacos aren't wild): the Round right after a
-   * player dropped from 2 dice to 1, opened by them. See `startNextRound`.
+   * Set for a Palifico Round (see `BidRules.palifico`; Pacos aren't wild): the player who dropped
+   * from 2 dice to 1, who always opens it (see `startNextRound`, and `leaveGame` for a cancelled
+   * one). Null for a normal Round. Use `isPalifico` to ask whether this Round is one.
    */
-  palifico: boolean;
+  palificoPlayer: PlayerId | null;
   /** How the Round ended: null while it is open (bidding), set once resolved (the reveal). */
   outcome: RoundOutcome | null;
 }
@@ -55,7 +56,7 @@ export interface Game {
 export function startGame(playerIds: readonly PlayerId[], rng: Rng): Game {
   const opener = playerIds[rng(playerIds.length)]!;
   const players = playerIds.map((id) => ({ id, dice: rollDice(STARTING_DICE, rng) }));
-  return { players, round: { number: 1, opener, turn: opener, bids: [], palifico: false, outcome: null } };
+  return { players, round: { number: 1, opener, turn: opener, bids: [], palificoPlayer: null, outcome: null } };
 }
 
 /**
@@ -68,8 +69,8 @@ export function startGame(playerIds: readonly PlayerId[], rng: Rng): Game {
  */
 export function startNextRound(game: Game, rng: Rng): Game {
   const outcome = game.round.outcome!;
-  const palifico = droppedToOneDie(game);
-  const opener = openerFrom(game, palifico ?? outcome.nextOpener);
+  const palificoPlayer = droppedToOneDie(game);
+  const opener = openerFrom(game, palificoPlayer ?? outcome.nextOpener);
   const players = game.players.map((p) => ({ id: p.id, dice: rollDice(dieCount(game, p.id), rng) }));
   return {
     ...game,
@@ -79,10 +80,15 @@ export function startNextRound(game: Game, rng: Rng): Game {
       opener,
       turn: opener,
       bids: [],
-      palifico: palifico !== null,
+      palificoPlayer,
       outcome: null,
     },
   };
+}
+
+/** Whether the current Round is a Palifico Round. */
+export function isPalifico(game: Game): boolean {
+  return game.round.palificoPlayer !== null;
 }
 
 /**
