@@ -68,6 +68,33 @@ label {
   width: 4rem;
 }
 
+.turn-actions {
+  margin-top: 0.5rem;
+}
+
+.reveal .banner {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid #d97706;
+  font-weight: bold;
+}
+
+.reveal .revealed-player {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.reveal .revealed-player .nickname {
+  min-width: 4rem;
+}
+
+/* Dice that count toward the called Bid, as decided by the server. */
+.die.counts {
+  border-color: #d97706;
+  background: #d9770633;
+}
+
 /* The 3D dice sit in a fixed backdrop at the bottom of the viewport, behind the page; the HTML layer
    stays on top and clickable, and the page leaves room below its last panel so text can scroll clear of the dice. */
 .dice-stage {

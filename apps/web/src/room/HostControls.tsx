@@ -3,7 +3,18 @@ import type { ClientMessage, RoomView } from "@perudo/server/protocol";
 
 /** Controls only the Host sees. Renders nothing for everyone else. */
 export function HostControls({ view, send }: { view: RoomView; send(message: ClientMessage): void }) {
-  if (view.you !== view.hostId || view.game) return null;
+  if (view.you !== view.hostId) return null;
+
+  if (view.game) {
+    if (view.game.phase !== "reveal") return null;
+    return (
+      <section className="host-controls">
+        <button type="button" onClick={() => send({ type: "start-next-round" })}>
+          Start next Round
+        </button>
+      </section>
+    );
+  }
 
   const enoughPlayers = view.people.length >= MIN_PLAYERS;
   return (

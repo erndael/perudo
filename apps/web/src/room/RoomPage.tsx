@@ -3,6 +3,7 @@ import { GamePanel } from "./GamePanel.tsx";
 import { HostControls } from "./HostControls.tsx";
 import { NicknameForm } from "./NicknameForm.tsx";
 import { PeopleList } from "./PeopleList.tsx";
+import { RevealPanel } from "./RevealPanel.tsx";
 import { RoomNotFound } from "./RoomNotFound.tsx";
 import { useRoom, type ConnectionStatus } from "./useRoom.ts";
 import { useRoomExists } from "./useRoomExists.ts";
@@ -43,6 +44,7 @@ export function RoomPage({ code }: { code: string }) {
       <PeopleList view={view} />
       <HostControls view={view} send={send} />
       {view.game && <GamePanel game={view.game} />}
+      <RevealPanel view={view} />
       <BiddingPanel view={view} send={send} />
       {error && <p role="alert">{error.message}</p>}
     </main>

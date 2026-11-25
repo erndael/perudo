@@ -9,16 +9,17 @@ export function formatBid({ count, face }: Bid): string {
   return `${count} × ${face === 1 ? "Paco" : face}`;
 }
 
-/** Whose Turn it is, the current Round's Bids, and the bidding controls on your Turn. */
+/** Whose Turn it is, the current Round's Bids, and on your Turn the Bid controls and Dudo (once there is a Bid). */
 export function BiddingPanel({ view, send }: { view: RoomView; send(message: ClientMessage): void }) {
   const game = view.game;
   if (!game) return null;
   const nickname = (id: string) => view.people.find((p) => p.id === id)?.nickname ?? "?";
-  const yourTurn = game.turn === view.you;
+  const bidding = game.phase === "bidding";
+  const yourTurn = bidding && game.turn === view.you;
 
   return (
     <section className="bidding">
-      <p className="turn">{yourTurn ? "It's your Turn" : `It's ${nickname(game.turn)}'s Turn`}</p>
+      {bidding && <p className="turn">{yourTurn ? "It's your Turn" : `It's ${nickname(game.turn)}'s Turn`}</p>}
       <h3 id="bids-heading">Bids</h3>
       {game.bids.length === 0 ? (
         <p className="hint">No Bids yet this Round.</p>
@@ -33,6 +34,13 @@ export function BiddingPanel({ view, send }: { view: RoomView; send(message: Cli
       )}
       {/* Keyed by the number of Bids so the count resets to a sensible default each Turn. */}
       {yourTurn && <BidControls key={game.bids.length} game={game} send={send} />}
+      {yourTurn && game.bids.length > 0 && (
+        <div className="turn-actions">
+          <button type="button" onClick={() => send({ type: "dudo" })}>
+            Dudo
+          </button>
+        </div>
+      )}
     </section>
   );
 }

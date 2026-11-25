@@ -57,3 +57,18 @@ export async function makeBid(page: Page, count: number, face: string): Promise<
   await page.getByLabel("Count").fill(String(count));
   await bidButton(page, count, face).click();
 }
+
+/** Calls Dudo on the current Bid, on the player's Turn. */
+export async function callDudo(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Dudo" }).click();
+}
+
+/** The reveal's banner: who called what, the actual count, and who loses a die. */
+export function revealBanner(page: Page) {
+  return page.getByRole("region", { name: "Reveal" }).locator(".banner");
+}
+
+/** One player's revealed dice, in order: the Face as text, plus " (counts)" if it counts toward the Bid. */
+export function revealedDice(page: Page, nickname: string) {
+  return page.getByRole("region", { name: "Reveal" }).getByRole("list", { name: `${nickname}'s dice` }).getByRole("listitem");
+}

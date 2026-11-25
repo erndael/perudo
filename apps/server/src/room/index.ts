@@ -9,7 +9,16 @@ import { viewFor } from "./view.ts";
 
 export type { RoomCommand } from "./commands/index.ts";
 export { HOST_DISCONNECT_GRACE_MS } from "./host.ts";
-export type { CommandResult, GameView, PlayerId, RoomError, RoomErrorCode, RoomView } from "./types.ts";
+export type {
+  CommandResult,
+  GamePhase,
+  GameView,
+  PlayerId,
+  RevealView,
+  RoomError,
+  RoomErrorCode,
+  RoomView,
+} from "./types.ts";
 
 export interface DispatchOutcome {
   result: CommandResult;
