@@ -111,8 +111,8 @@ label {
   background: #d9770633;
 }
 
-/* The 3D dice sit in a fixed backdrop at the bottom of the viewport, behind the page; the HTML layer
-   stays on top and clickable, and the page leaves room below its last panel so text can scroll clear of the dice. */
+/* The 3D dice sit in a fixed backdrop behind the page, never clickable. On narrow screens it is the bottom
+   of the viewport, and the page leaves room below its last panel so text can scroll clear of the dice. */
 .dice-stage {
   position: fixed;
   inset: auto 0 0;
@@ -127,8 +127,40 @@ label {
   z-index: 1;
 }
 
-.page:has(.dice-stage) {
+/* Set by RoomPage during a Game while the 3D dice run (before the lazy 3D code has loaded, too, so nothing jumps). */
+.page.with-dice-stage {
   padding-bottom: var(--dice-stage-height);
+}
+
+.page.with-dice-stage code {
+  overflow-wrap: anywhere;
+}
+
+/* Wide screens: the page is a column on the left and the dice stage fills the rest of the viewport,
+   so no HTML text is ever drawn over the dice. */
+@media (min-width: 900px) {
+  :root {
+    --page-column-width: 28rem;
+  }
+
+  .page.with-dice-stage {
+    box-sizing: border-box;
+    width: var(--page-column-width);
+    max-width: none;
+    min-height: 100vh;
+    margin: 0;
+    padding: 1.5rem;
+    border-right: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  }
+
+  .page.with-dice-stage h1 {
+    margin-top: 0;
+  }
+
+  .dice-stage {
+    inset: 0 0 0 var(--page-column-width);
+    height: auto;
+  }
 }
 
 .visually-hidden {

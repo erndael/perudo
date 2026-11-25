@@ -49,7 +49,8 @@ export function RoomPage({ code }: { code: string }) {
   }
 
   return (
-    <main className="page">
+    // During a Game the 3D dice get their own region of the screen (see styles.css).
+    <main className={diceIn3D && view.game ? "page with-dice-stage" : "page"}>
       <h1>Room {view.code}</h1>
       {STATUS_TEXT[status] && <p role="status">{STATUS_TEXT[status]}</p>}
       <p>

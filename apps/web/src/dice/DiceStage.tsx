@@ -3,7 +3,8 @@ import { Physics } from "@react-three/rapier";
 import { Suspense, type ReactNode } from "react";
 
 /**
- * The 3D backdrop: a canvas fixed to the bottom of the viewport, behind the HTML layer, with camera and lights.
+ * The 3D backdrop: a canvas fixed beside the page column on wide screens, or to the bottom of the viewport on
+ * narrow ones (see `.dice-stage` in styles.css), behind the HTML layer, with camera and lights.
  * Nothing in it is interactive (pointer-events: none), so HTML controls on top stay usable.
  * Put dice scenes inside; wrap physics scenes in <Physics> (see ThrowScene).
  */
