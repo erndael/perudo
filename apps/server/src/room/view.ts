@@ -1,4 +1,4 @@
-import { countsToward, dieCount, totalDice, type Game } from "@perudo/engine";
+import { countsToward, dieCount, totalDice, winner, type Game } from "@perudo/engine";
 import type { GameView, PlayerId, RevealView, RoomState, RoomView } from "./types.ts";
 
 /** Builds what `viewer` may see. The only place that decides visibility. */
@@ -25,8 +25,9 @@ function isWaiting(state: RoomState, id: PlayerId): boolean {
 /** Other players' dice must never leave this function outside a reveal (ADR-0001). */
 function gameViewFor(game: Game, viewer: PlayerId): GameView {
   const you = game.players.find((p) => p.id === viewer);
+  const won = winner(game);
   return {
-    phase: game.round.outcome ? "reveal" : "bidding",
+    phase: won ? "over" : game.round.outcome ? "reveal" : "bidding",
     round: game.round.number,
     opener: game.round.opener,
     turn: game.round.turn,
@@ -36,6 +37,7 @@ function gameViewFor(game: Game, viewer: PlayerId): GameView {
     players: game.players.map((p) => ({ id: p.id, dieCount: dieCount(game, p.id) })),
     yourDice: you ? [...you.dice] : null,
     reveal: revealViewFor(game),
+    winner: won,
   };
 }
 

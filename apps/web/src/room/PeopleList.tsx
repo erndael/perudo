@@ -16,7 +16,8 @@ export function PeopleList({ view }: { view: RoomView }) {
               {person.id === view.game?.opener && <span className="badge"> Opener</span>}
               {person.waiting && <span className="badge waiting"> Waiting</span>}
               {!person.connected && <span className="badge disconnected"> Disconnected</span>}
-              {player && (
+              {player?.dieCount === 0 && <span className="badge eliminated"> Eliminated</span>}
+              {player && player.dieCount > 0 && (
                 <span className="die-count">
                   {" "}
                   {player.dieCount} {player.dieCount === 1 ? "die" : "dice"}

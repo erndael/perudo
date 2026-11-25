@@ -2,12 +2,14 @@ import type { GameView } from "@perudo/server/protocol";
 import { use3D, YourDice3D } from "../dice/Dice3D.tsx";
 
 /** The Game in progress: Round, total dice in play and the viewer's own dice (thrown in 3D). */
-export function GamePanel({ game }: { game: GameView }) {
+export function GamePanel({ game, you }: { game: GameView; you: string }) {
   const [threeD, fail3D] = use3D();
+  const eliminated = game.players.some((p) => p.id === you && p.dieCount === 0);
   return (
     <section className="game">
       <h2>Round {game.round}</h2>
       <p>Total dice in play: {game.totalDice}</p>
+      {eliminated && <p className="eliminated">You're Eliminated. You can keep watching the Game.</p>}
       {game.yourDice ? (
         <>
           <h3 id="your-dice-heading">Your dice</h3>

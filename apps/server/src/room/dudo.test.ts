@@ -181,6 +181,7 @@ describe("starting the next Round", () => {
         ],
         yourDice: own[viewer],
         reveal: null,
+        winner: null,
       });
     }
   });
