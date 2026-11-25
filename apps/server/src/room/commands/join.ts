@@ -29,9 +29,10 @@ export function join(state: RoomState, command: JoinCommand, ctx: RoomContext): 
       `Please choose a nickname of ${NICKNAME_MIN_LENGTH}–${NICKNAME_MAX_LENGTH} characters.`,
     );
   }
-  // Departed players' nicknames still show in the Game (Seats, the reveal), so they're taken too.
+  // Only people in the Room hold their nickname. A departed player's name still shows on their old
+  // Seat, but they (or anyone) may take it again; the Game tells the two apart by player id.
   const key = nickname.toLocaleLowerCase();
-  if ([...state.people, ...state.departed].some((p) => p.nickname.toLocaleLowerCase() === key)) {
+  if (state.people.some((p) => p.nickname.toLocaleLowerCase() === key)) {
     return reject("nickname-taken", `“${nickname}” is already taken in this Room. Please choose another nickname.`);
   }
   const id = `p${state.nextPlayerNumber++}`;

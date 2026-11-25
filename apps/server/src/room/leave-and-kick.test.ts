@@ -355,15 +355,28 @@ describe("the departed player's Seat", () => {
 });
 
 describe("the departed player's nickname", () => {
-  it("can't be taken by a new arrival while the Game still shows it", () => {
-    const { room, cat } = threePlayerGame(...rolls(6, 6, 5, 5, 4), ...rolls(1, 2, 3, 4, 5));
+  it("is free for them to rejoin with mid-Game; the Game keeps showing their old Seat under it", () => {
+    const { room, ana, cat } = threePlayerGame(...rolls(6, 6, 5, 5, 4), ...rolls(1, 2, 3, 4, 5));
     mustAccept(room, { type: "leave", by: cat });
-    const before = room.views();
 
-    const { result, views } = room.dispatch({ type: "join", nickname: " cat " });
+    const { result, views } = room.dispatch({ type: "join", nickname: "Cat" });
 
-    expect(result).toMatchObject({ ok: false, error: { code: "nickname-taken" } });
-    expect(views).toEqual(before);
+    expect(result).toMatchObject({ ok: true });
+    const newCat = result.ok ? result.playerId : undefined;
+    expect(newCat).not.toBe(cat);
+    const view = views.get(ana)!;
+    expect(view.people.map((p) => p.nickname)).toEqual(["Ana", "Ben", "Cat"]);
+    expect(view.departed).toEqual([{ id: cat, nickname: "Cat" }]);
+    expect(view.game?.players.map((p) => p.id)).not.toContain(newCat);
+  });
+
+  it("is still taken by someone in the Room, whatever the case or spacing", () => {
+    const { room } = threePlayerGame();
+
+    expect(room.dispatch({ type: "join", nickname: " cat " }).result).toMatchObject({
+      ok: false,
+      error: { code: "nickname-taken" },
+    });
   });
 
   it("is free again once a rematch starts, and the rematch shows no departed players", () => {
