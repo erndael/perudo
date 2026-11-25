@@ -6,4 +6,6 @@ export { bidRulesFor, isLegalBid, placeBid } from "./bidding.ts";
 export type { Face, Rng } from "./dice.ts";
 export { rollDice } from "./dice.ts";
 export type { Game, GamePlayer, PlayerId, Round } from "./game.ts";
-export { MAX_PLAYERS, MIN_PLAYERS, STARTING_DICE, startGame, totalDice } from "./game.ts";
+export { dieCount, MAX_PLAYERS, MIN_PLAYERS, STARTING_DICE, startGame, startNextRound, totalDice } from "./game.ts";
+export type { RoundOutcome } from "./resolution.ts";
+export { actualCount, callDudo, countsToward } from "./resolution.ts";

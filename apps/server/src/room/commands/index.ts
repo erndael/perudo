@@ -2,13 +2,17 @@
 // command type and handler, then add one line to `RoomCommand` and one to `handlers`.
 import type { CommandResult, RoomContext, RoomState } from "../types.ts";
 import { bid, type BidCommand } from "./bid.ts";
+import { dudo, type DudoCommand } from "./dudo.ts";
 import { join, type JoinCommand } from "./join.ts";
 import { startGame, type StartGameCommand } from "./start-game.ts";
+import { startNextRound, type StartNextRoundCommand } from "./start-next-round.ts";
 
 export type RoomCommand =
   | JoinCommand
   | StartGameCommand
-  | BidCommand;
+  | BidCommand
+  | DudoCommand
+  | StartNextRoundCommand;
 
 type Handler<C> = (state: RoomState, command: C, ctx: RoomContext) => CommandResult;
 
@@ -16,4 +20,6 @@ export const handlers: { [K in RoomCommand["type"]]: Handler<Extract<RoomCommand
   join,
   "start-game": startGame,
   bid,
+  dudo,
+  "start-next-round": startNextRound,
 };

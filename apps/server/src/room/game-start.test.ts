@@ -133,6 +133,7 @@ describe("dice visibility", () => {
 
     // Exact equality: nothing beyond these fields may appear in Ben's view of the Game.
     expect(views.get(ben)?.game).toEqual({
+      phase: "bidding",
       round: 1,
       opener: ana,
       turn: ana,
@@ -145,6 +146,7 @@ describe("dice visibility", () => {
         { id: cat, dieCount: 5 },
       ],
       yourDice: [1, 1, 2, 6, 6],
+      reveal: null,
     });
     expect(JSON.stringify(views.get(ana))).not.toContain("[1,1,2,6,6]");
     expect(JSON.stringify(views.get(cat))).not.toContain("[1,1,2,6,6]");

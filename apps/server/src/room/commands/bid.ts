@@ -11,6 +11,7 @@ export interface BidCommand {
 /** The player whose Turn it is makes a Bid. */
 export function bid(state: RoomState, command: BidCommand): CommandResult {
   if (!state.game) return reject("no-game", "There is no Game in progress.");
+  if (state.game.round.outcome) return reject("round-over", "This Round is over.");
   if (command.by !== state.game.round.turn) return reject("not-your-turn", "It isn't your Turn.");
   const bid = { count: command.count, face: command.face };
   if (!isLegalBid(bid, bidRulesFor(state.game))) {

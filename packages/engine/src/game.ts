@@ -1,5 +1,6 @@
 import type { PlacedBid } from "./bidding.ts";
 import { rollDice, type Face, type Rng } from "./dice.ts";
+import type { RoundOutcome } from "./resolution.ts";
 
 export type PlayerId = string;
 
@@ -10,7 +11,10 @@ export const MAX_PLAYERS = 6;
 /** A player taking part in a Game. Their index in `Game.players` is their Seat. */
 export interface GamePlayer {
   id: PlayerId;
-  /** This Round's dice; `dice.length` is the player's die count. Secret until a reveal (ADR-0001). */
+  /**
+   * This Round's dice, as rolled. Secret until a reveal (ADR-0001). `dice.length` is the die
+   * count while the Round is open; once it has an outcome use `dieCount` (it includes the change).
+   */
   dice: Face[];
 }
 
@@ -24,6 +28,8 @@ export interface Round {
   bids: PlacedBid[];
   /** A Palifico Round (see `BidRules.palifico`). Never set yet: ticket 06 triggers it. */
   palifico: boolean;
+  /** How the Round ended: null while it is open (bidding), set once resolved (the reveal). */
+  outcome: RoundOutcome | null;
 }
 
 /** One Game, from start until a single player has dice left. */
@@ -41,10 +47,38 @@ export interface Game {
 export function startGame(playerIds: readonly PlayerId[], rng: Rng): Game {
   const opener = playerIds[rng(playerIds.length)]!;
   const players = playerIds.map((id) => ({ id, dice: rollDice(STARTING_DICE, rng) }));
-  return { players, round: { number: 1, opener, turn: opener, bids: [], palifico: false } };
+  return { players, round: { number: 1, opener, turn: opener, bids: [], palifico: false, outcome: null } };
 }
 
-/** All dice in play across every player. */
+/**
+ * Starts the next Round after a resolved one: applies the outcome's die change, rolls fresh
+ * dice for every player in Seat order (see `rollDice`; players with no dice roll none), and
+ * gives the opening Turn to the outcome's `nextOpener`, or to the next Seat with dice if they
+ * have none left. Doesn't check that the Round has an outcome: callers check first.
+ */
+export function startNextRound(game: Game, rng: Rng): Game {
+  const outcome = game.round.outcome!;
+  const players = game.players.map((p) => ({ id: p.id, dice: rollDice(dieCount(game, p.id), rng) }));
+  const seat = players.findIndex((p) => p.id === outcome.nextOpener);
+  const opener =
+    Array.from({ length: players.length }, (_, step) => players[(seat + step) % players.length]!).find(
+      (p) => p.dice.length > 0,
+    )?.id ?? outcome.nextOpener;
+  return {
+    ...game,
+    players,
+    round: { number: game.round.number + 1, opener, turn: opener, bids: [], palifico: false, outcome: null },
+  };
+}
+
+/** How many dice `id` has, including the die change of a resolved Round. 0 for someone not playing. */
+export function dieCount(game: Game, id: PlayerId): number {
+  const dice = game.players.find((p) => p.id === id)?.dice.length ?? 0;
+  const change = game.round.outcome?.dieChange;
+  return change?.player === id ? dice + change.delta : dice;
+}
+
+/** All dice in play across every player (after the die change, once the Round is resolved). */
 export function totalDice(game: Game): number {
-  return game.players.reduce((sum, p) => sum + p.dice.length, 0);
+  return game.players.reduce((sum, p) => sum + dieCount(game, p.id), 0);
 }

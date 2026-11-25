@@ -1,4 +1,4 @@
-import type { Face, Game, PlacedBid } from "@perudo/engine";
+import type { Face, Game, PlacedBid, RoundOutcome } from "@perudo/engine";
 import type { Clock, Rng } from "../deps.ts";
 
 export type PlayerId = string;
@@ -37,7 +37,10 @@ export type RoomErrorCode =
   | "nickname-taken"
   | "no-game"
   | "not-your-turn"
-  | "illegal-bid";
+  | "illegal-bid"
+  | "round-over"
+  | "no-bid"
+  | "round-in-progress";
 
 export interface RoomError {
   code: RoomErrorCode;
@@ -69,8 +72,26 @@ export interface RoomView {
   game: GameView | null;
 }
 
+/**
+ * Where the Game is: "bidding" while the Round is open, "reveal" once it has resolved
+ * (until the Host starts the next Round).
+ */
+export type GamePhase = "bidding" | "reveal";
+
+/** What everyone sees once a Round resolves: every player's dice, and the outcome. */
+export interface RevealView {
+  /** Everyone playing, in Seat order, with this Round's dice as rolled. */
+  players: {
+    id: PlayerId;
+    /** `counts` is decided by the server: whether the die counts toward the called Bid (Pacos wild outside Palifico). */
+    dice: { face: Face; counts: boolean }[];
+  }[];
+  outcome: RoundOutcome;
+}
+
 /** What one player may see of the Game. Never contains another player's dice outside a reveal. */
 export interface GameView {
+  phase: GamePhase;
   /** Round number within the Game, from 1. Changes whenever dice are re-rolled. */
   round: number;
   /** Who makes the first Bid of this Round. */
@@ -85,6 +106,8 @@ export interface GameView {
   bids: PlacedBid[];
   /** Whether this is a Palifico Round (changes which Bids are legal; see engine `BidRules`). */
   palifico: boolean;
-  /** The viewer's own dice this Round; null if the viewer isn't playing in this Game. */
+  /** The viewer's own dice this Round, as rolled; null if the viewer isn't playing in this Game. */
   yourDice: Face[] | null;
+  /** Every player's dice and the Round outcome: only in the "reveal" phase, null otherwise. */
+  reveal: RevealView | null;
 }
