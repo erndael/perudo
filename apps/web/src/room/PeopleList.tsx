@@ -1,6 +1,6 @@
 import type { RoomView } from "@perudo/server/protocol";
 
-/** Everyone in the Room, in Seat order, with die counts and the Opener during a Game, and who is waiting for the next one. */
+/** Everyone in the Room, in Seat order, with die counts and the Opener during a Game, who is waiting for the next one, and who is disconnected. */
 export function PeopleList({ view }: { view: RoomView }) {
   return (
     <section>
@@ -15,6 +15,7 @@ export function PeopleList({ view }: { view: RoomView }) {
               {person.id === view.you && <span className="badge you"> You</span>}
               {person.id === view.game?.opener && <span className="badge"> Opener</span>}
               {person.waiting && <span className="badge waiting"> Waiting</span>}
+              {!person.connected && <span className="badge disconnected"> Disconnected</span>}
               {player && (
                 <span className="die-count">
                   {" "}

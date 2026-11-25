@@ -1,7 +1,9 @@
 import type { GameView } from "@perudo/server/protocol";
+import { use3D, YourDice3D } from "../dice/Dice3D.tsx";
 
-/** The Game in progress: Round, total dice in play and the viewer's own dice (plain HTML for now). */
+/** The Game in progress: Round, total dice in play and the viewer's own dice (thrown in 3D). */
 export function GamePanel({ game }: { game: GameView }) {
+  const [threeD, fail3D] = use3D();
   return (
     <section className="game">
       <h2>Round {game.round}</h2>
@@ -9,13 +11,17 @@ export function GamePanel({ game }: { game: GameView }) {
       {game.yourDice ? (
         <>
           <h3 id="your-dice-heading">Your dice</h3>
-          <ol aria-labelledby="your-dice-heading" className="dice">
+          {/* The server's Faces as HTML: the accessible (and tested) truth. Visually hidden while the 3D dice show them. */}
+          <ol aria-labelledby="your-dice-heading" className={threeD ? "dice visually-hidden" : "dice"}>
             {game.yourDice.map((face, i) => (
               <li key={i} className="die">
                 {face}
               </li>
             ))}
           </ol>
+          {threeD && (
+            <YourDice3D faces={game.yourDice} throwKey={`${game.round}:${game.yourDice.join("")}`} onFail={fail3D} />
+          )}
         </>
       ) : (
         <p>You'll join the next Game.</p>

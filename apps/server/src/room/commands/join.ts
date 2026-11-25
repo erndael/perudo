@@ -1,5 +1,5 @@
 import { MAX_PLAYERS } from "@perudo/engine";
-import { reject, type CommandResult, type RoomState } from "../types.ts";
+import { reject, type CommandResult, type RoomContext, type RoomState } from "../types.ts";
 
 export interface JoinCommand {
   type: "join";
@@ -12,7 +12,7 @@ export const ROOM_CAPACITY = MAX_PLAYERS;
 export const NICKNAME_MIN_LENGTH = 1;
 export const NICKNAME_MAX_LENGTH = 16;
 
-export function join(state: RoomState, command: JoinCommand): CommandResult {
+export function join(state: RoomState, command: JoinCommand, ctx: RoomContext): CommandResult {
   if (typeof command.nickname !== "string") {
     return reject("invalid-nickname", "Please choose a nickname.");
   }
@@ -32,7 +32,8 @@ export function join(state: RoomState, command: JoinCommand): CommandResult {
     return reject("nickname-taken", `“${nickname}” is already taken in this Room. Please choose another nickname.`);
   }
   const id = `p${state.nextPlayerNumber++}`;
-  state.people.push({ id, nickname });
+  const reconnectToken = ctx.newToken();
+  state.people.push({ id, nickname, reconnectToken, connected: true, disconnectedAt: null });
   state.hostId ??= id;
-  return { ok: true, playerId: id };
+  return { ok: true, playerId: id, reconnectToken };
 }

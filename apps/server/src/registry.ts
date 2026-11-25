@@ -6,6 +6,9 @@ import { createRoom, type Room } from "./room/index.ts";
 /** No O/0 or I/1, so codes can be read aloud. */
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 6;
+const TOKEN_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+/** 22 characters of 62 is about 131 bits: unguessable when `rng` is secure. */
+const TOKEN_LENGTH = 22;
 /** A Room is deleted this long after it becomes empty. */
 export const ROOM_EXPIRY_MS = 10 * 60_000;
 
@@ -18,7 +21,7 @@ export interface Registry {
 }
 
 export interface RegistryDeps {
-  /** For Room codes; also each Room's RNG unless `newRoomRng` is given. */
+  /** For Room codes and reconnect tokens; also each Room's RNG unless `newRoomRng` is given. */
   rng: Rng;
   clock: Clock;
   /** Called once per new Room for the RNG that rolls its dice (seeded per Room in test mode). */
@@ -37,6 +40,11 @@ export function createRegistry(deps: RegistryDeps): Registry {
     return code;
   };
 
+  // Drawn from `deps.rng`, never a Room's dice RNG: tokens stay secret in test mode
+  // and joining doesn't shift the seeded dice.
+  const newToken = () =>
+    Array.from({ length: TOKEN_LENGTH }, () => TOKEN_ALPHABET[deps.rng(TOKEN_ALPHABET.length)]).join("");
+
   const isExpired = (room: Room) => {
     const since = room.emptySince();
     return since !== null && deps.clock() - since >= ROOM_EXPIRY_MS;
@@ -44,7 +52,7 @@ export function createRegistry(deps: RegistryDeps): Registry {
 
   return {
     create() {
-      const room = createRoom({ code: newCode(), rng: newRoomRng(), clock: deps.clock });
+      const room = createRoom({ code: newCode(), rng: newRoomRng(), clock: deps.clock, newToken });
       rooms.set(room.code, room);
       return room;
     },

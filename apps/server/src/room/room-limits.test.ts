@@ -28,9 +28,9 @@ describe("people arriving mid-Game", () => {
     const dan = [...views.keys()][2]!;
     for (const view of views.values()) {
       expect(view.people).toEqual([
-        { id: ana, nickname: "Ana", waiting: false },
-        { id: ben, nickname: "Ben", waiting: false },
-        { id: dan, nickname: "Dan", waiting: true },
+        { id: ana, nickname: "Ana", waiting: false, connected: true },
+        { id: ben, nickname: "Ben", waiting: false, connected: true },
+        { id: dan, nickname: "Dan", waiting: true, connected: true },
       ]);
     }
     expect(views.get(dan)?.game?.yourDice).toBeNull();

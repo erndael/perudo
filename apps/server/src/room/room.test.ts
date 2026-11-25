@@ -7,7 +7,7 @@ describe("joining a Room", () => {
 
     const { result, views } = room.dispatch({ type: "join", nickname: "Ana" });
 
-    expect(result).toEqual({ ok: true, playerId: expect.any(String) });
+    expect(result).toEqual({ ok: true, playerId: expect.any(String), reconnectToken: expect.any(String) });
     const ana = (result.ok && result.playerId) || "";
     expect(views.get(ana)).toMatchObject({
       code: room.code,
