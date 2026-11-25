@@ -8,13 +8,25 @@ const port = Number(process.env.E2E_PORT);
 export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
+  // Several browser contexts per test; keep the machine usable when worktrees run e2e side by side.
+  workers: 4,
   forbidOnly: !!process.env.CI,
   reporter: "list",
   use: {
     baseURL: `http://localhost:${port}`,
     trace: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        // e2e asserts on the HTML layer, never the canvas. Software WebGL (SwiftShader) for every page
+        // pins the CPU, so WebGL is switched off and the app shows its HTML dice fallback instead.
+        launchOptions: { args: ["--disable-3d-apis"] },
+      },
+    },
+  ],
   webServer: {
     command: "pnpm build && pnpm --filter @perudo/server start",
     url: `http://localhost:${port}/healthz`,
