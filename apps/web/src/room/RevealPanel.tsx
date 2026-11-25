@@ -1,5 +1,6 @@
 import type { RevealView, RoomView } from "@perudo/server/protocol";
 import { formatBid } from "./BiddingPanel.tsx";
+import { nicknameOf } from "./names.ts";
 
 /** "Ana called Dudo on Cat's 4 × 6. There were 3. Cat loses a die." */
 export function outcomeBanner(reveal: RevealView, nickname: (id: string) => string): string {
@@ -20,7 +21,7 @@ export function outcomeBanner(reveal: RevealView, nickname: (id: string) => stri
 export function RevealPanel({ view }: { view: RoomView }) {
   const reveal = view.game?.reveal;
   if (!reveal) return null;
-  const nickname = (id: string) => view.people.find((p) => p.id === id)?.nickname ?? "?";
+  const nickname = (id: string) => nicknameOf(view, id);
 
   return (
     <section className="reveal" aria-labelledby="reveal-heading">

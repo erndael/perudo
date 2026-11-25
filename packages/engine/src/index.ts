@@ -5,6 +5,7 @@ export type { Bid, BidRules, PlacedBid } from "./bidding.ts";
 export { bidRulesFor, isLegalBid, placeBid } from "./bidding.ts";
 export type { Face, Rng } from "./dice.ts";
 export { rollDice } from "./dice.ts";
+export { leaveGame } from "./departure.ts";
 export type { Game, GamePlayer, PlayerId, Round } from "./game.ts";
 export {
   dieCount,

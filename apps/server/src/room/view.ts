@@ -14,6 +14,7 @@ export function viewFor(state: RoomState, viewer: PlayerId): RoomView {
       connected,
     })),
     game: state.game && gameViewFor(state.game, viewer),
+    departed: state.departed.map((d) => ({ ...d })),
   };
 }
 

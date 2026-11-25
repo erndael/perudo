@@ -15,6 +15,9 @@ import { HOST_DISCONNECT_GRACE_MS, type PlayerId, type Room, type RoomCommand, t
 
 /** WebSocket close code: a newer connection (e.g. another tab) took over this Seat. Clients don't retry. */
 export const CLOSE_REPLACED = 4000;
+/** WebSocket close codes: the player left the Room, or the Host kicked them. Their Seat and token are gone. */
+export const CLOSE_LEFT = 4001;
+export const CLOSE_KICKED = 4002;
 
 const TRANSPORT_ONLY: ReadonlySet<string> = new Set<TransportCommandType>(["join", "reconnect", "disconnect", "tick"]);
 
@@ -33,6 +36,21 @@ export function attachTransport(wss: WebSocketServer, registry: Registry): void 
       const ws = inRoom?.get(playerId);
       if (ws) send(ws, { type: "view", view });
     }
+  };
+
+  /**
+   * Everyone with an open socket is connected, so is in `views` unless they've just left the
+   * Room or been kicked: close their socket (no `disconnect` follows: it's no longer mapped).
+   */
+  const dropDeparted = (room: Room, views: Map<PlayerId, RoomView>, code: number) => {
+    const inRoom = sockets.get(room.code);
+    if (!inRoom) return;
+    for (const [playerId, ws] of inRoom) {
+      if (views.has(playerId)) continue;
+      inRoom.delete(playerId);
+      ws.close(code, code === CLOSE_KICKED ? "The Host kicked you from the Room." : "You left the Room.");
+    }
+    if (inRoom.size === 0) sockets.delete(room.code);
   };
 
   wss.on("connection", (ws) => {
@@ -71,13 +89,17 @@ export function attachTransport(wss: WebSocketServer, registry: Registry): void 
         return broadcast(room, views);
       }
 
-      if (!bound) return sendError(ws, { code: "not-joined", message: "Join a Room first." });
+      // Not bound, or no longer: this socket's player has left or been kicked.
+      if (!bound || sockets.get(bound.room.code)?.get(bound.playerId) !== ws) {
+        return sendError(ws, { code: "not-joined", message: "Join a Room first." });
+      }
       if (TRANSPORT_ONLY.has(message.type)) {
         return sendError(ws, { code: "bad-message", message: "Unknown message." });
       }
       const command = { ...message, by: bound.playerId } as RoomCommand;
       const { result, views } = bound.room.dispatch(command);
       if (!result.ok) sendError(ws, result.error);
+      dropDeparted(bound.room, views, command.type === "kick" ? CLOSE_KICKED : CLOSE_LEFT);
       broadcast(bound.room, views);
     });
 

@@ -23,6 +23,8 @@ export interface RoomState {
   nextPlayerNumber: number;
   /** The Game in progress, if any. Holds every player's dice: never copy it into a view wholesale. */
   game: Game | null;
+  /** People who left or were kicked during the current Game, so its Seats and reveal can still name them. */
+  departed: { id: PlayerId; nickname: string }[];
 }
 
 /** What command handlers get besides the state and the command. */
@@ -50,7 +52,9 @@ export type RoomErrorCode =
   | "round-over"
   | "no-bid"
   | "round-in-progress"
-  | "game-over";
+  | "game-over"
+  | "not-in-room"
+  | "invalid-player";
 
 export interface RoomError {
   code: RoomErrorCode;
@@ -81,6 +85,8 @@ export interface RoomView {
   }[];
   /** The Game in progress, or null before the first Game. */
   game: GameView | null;
+  /** Nicknames of people who left the Room (or were kicked) but still appear in the Game. */
+  departed: { id: PlayerId; nickname: string }[];
 }
 
 /**

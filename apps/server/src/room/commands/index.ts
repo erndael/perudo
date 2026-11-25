@@ -5,6 +5,8 @@ import { bid, type BidCommand } from "./bid.ts";
 import { disconnect, type DisconnectCommand } from "./disconnect.ts";
 import { dudo, type DudoCommand } from "./dudo.ts";
 import { join, type JoinCommand } from "./join.ts";
+import { kick, type KickCommand } from "./kick.ts";
+import { leave, type LeaveCommand } from "./leave.ts";
 import { reconnect, type ReconnectCommand } from "./reconnect.ts";
 import { startGame, type StartGameCommand } from "./start-game.ts";
 import { startNextRound, type StartNextRoundCommand } from "./start-next-round.ts";
@@ -18,7 +20,9 @@ export type RoomCommand =
   | DisconnectCommand
   | TickCommand
   | DudoCommand
-  | StartNextRoundCommand;
+  | StartNextRoundCommand
+  | LeaveCommand
+  | KickCommand;
 
 type Handler<C> = (state: RoomState, command: C, ctx: RoomContext) => CommandResult;
 
@@ -31,4 +35,6 @@ export const handlers: { [K in RoomCommand["type"]]: Handler<Extract<RoomCommand
   tick,
   dudo,
   "start-next-round": startNextRound,
+  leave,
+  kick,
 };
