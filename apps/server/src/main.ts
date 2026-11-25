@@ -9,4 +9,4 @@ const webRoot = fileURLToPath(new URL("../../web/dist", import.meta.url));
 
 await startServer({ ...config, webRoot, clock: systemClock });
 console.log(`Perudo listening on http://localhost:${config.port}`);
-if (process.env.PERUDO_RNG_SEED !== undefined) console.log("TEST MODE: dice are seeded, not secure.");
+if (config.testMode) console.log("TEST MODE: dice are seeded, not secure.");

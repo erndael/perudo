@@ -79,7 +79,9 @@ export type CommandResult =
   | { ok: true; playerId?: PlayerId; reconnectToken?: string }
   | { ok: false; error: RoomError };
 
-export function reject(code: RoomErrorCode, message: string): CommandResult {
+export type Rejection = Extract<CommandResult, { ok: false }>;
+
+export function reject(code: RoomErrorCode, message: string): Rejection {
   return { ok: false, error: { code, message } };
 }
 

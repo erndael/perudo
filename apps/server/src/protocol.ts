@@ -1,13 +1,21 @@
 // Wire messages between browser and server over the WebSocket at /ws.
-// The web app imports these types (type-only) via "@perudo/server/protocol".
+// The web app imports these via "@perudo/server/protocol": types, plus a few plain constants
+// (close codes, error messages). Keep it free of runtime imports so it bundles on its own.
 import type { PlayerId, RoomCommand, RoomError, RoomView } from "./room/index.ts";
 
 export type { GamePhase, GameView, PlayerId, RevealView, RoomView } from "./room/index.ts";
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
-/** Room commands only the transport sends: on connect, on close, and from timers. */
-export type TransportCommandType = "join" | "reconnect" | "disconnect" | "tick";
+/** Room commands only the transport sends: on connect, on close, and from timers. Clients can't send them as commands. */
+export const TRANSPORT_COMMAND_TYPES = ["join", "reconnect", "disconnect", "tick"] as const;
+export type TransportCommandType = (typeof TRANSPORT_COMMAND_TYPES)[number];
+
+/** WebSocket close code: a newer connection (e.g. another tab) took over this Seat. Clients don't retry. */
+export const CLOSE_REPLACED = 4000;
+/** WebSocket close codes: the player left the Room, or the Host kicked them. Their Seat and token are gone. */
+export const CLOSE_LEFT = 4001;
+export const CLOSE_KICKED = 4002;
 
 /**
  * First message on a connection must be `join` (a new Seat) or `reconnect` (reclaim the

@@ -4,22 +4,19 @@
 // time-based rules (Host handover) apply even if nobody does anything.
 import type { WebSocket, WebSocketServer } from "ws";
 import {
+  CLOSE_KICKED,
+  CLOSE_LEFT,
+  CLOSE_REPLACED,
   ROOM_NOT_FOUND,
+  TRANSPORT_COMMAND_TYPES,
   type ClientMessage,
   type ServerMessage,
-  type TransportCommandType,
   type WireError,
 } from "./protocol.ts";
 import type { Registry } from "./registry.ts";
 import { HOST_DISCONNECT_GRACE_MS, type PlayerId, type Room, type RoomCommand, type RoomView } from "./room/index.ts";
 
-/** WebSocket close code: a newer connection (e.g. another tab) took over this Seat. Clients don't retry. */
-export const CLOSE_REPLACED = 4000;
-/** WebSocket close codes: the player left the Room, or the Host kicked them. Their Seat and token are gone. */
-export const CLOSE_LEFT = 4001;
-export const CLOSE_KICKED = 4002;
-
-const TRANSPORT_ONLY: ReadonlySet<string> = new Set<TransportCommandType>(["join", "reconnect", "disconnect", "tick"]);
+const TRANSPORT_ONLY: ReadonlySet<string> = new Set(TRANSPORT_COMMAND_TYPES);
 
 export function attachTransport(wss: WebSocketServer, registry: Registry): void {
   /** room code -> player id -> socket */

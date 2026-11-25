@@ -8,9 +8,9 @@ import { WebSocketServer } from "ws";
 import type { Clock, Rng } from "./deps.ts";
 import { ROOM_NOT_FOUND, type CreateRoomResponse, type RoomExistsResponse } from "./protocol.ts";
 import { createRegistry } from "./registry.ts";
+import { attachTransport } from "./transport.ts";
 
 const SWEEP_INTERVAL_MS = 60_000;
-import { attachTransport } from "./transport.ts";
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",

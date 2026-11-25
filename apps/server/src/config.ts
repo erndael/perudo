@@ -12,18 +12,20 @@ export interface Config {
   rng: Rng;
   /** Called once per new Room; the Room rolls all its dice with the returned RNG. */
   newRoomRng: () => Rng;
+  /** Test-only settings are in effect (seeded, insecure dice). Never true in production. */
+  testMode: boolean;
 }
 
 export function loadConfig(env: Record<string, string | undefined>): Config {
   const port = Number(env.PORT ?? 3000);
   const seed = env.PERUDO_RNG_SEED;
-  if (seed === undefined) return { port, rng: secureRng, newRoomRng: () => secureRng };
+  if (seed === undefined) return { port, rng: secureRng, newRoomRng: () => secureRng, testMode: false };
 
   if (env.PERUDO_TEST_MODE !== "1") {
     throw new Error("PERUDO_RNG_SEED is only accepted in test mode (PERUDO_TEST_MODE=1).");
   }
   if (!/^-?\d+$/.test(seed)) throw new Error(`PERUDO_RNG_SEED must be an integer, got "${seed}".`);
-  return { port, rng: secureRng, newRoomRng: () => seededRng(Number(seed)) };
+  return { port, rng: secureRng, newRoomRng: () => seededRng(Number(seed)), testMode: true };
 }
 
 /** Deterministic, NOT secure (mulberry32). Test mode only. */

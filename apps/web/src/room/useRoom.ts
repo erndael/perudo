@@ -3,14 +3,18 @@
 // The reconnect token from the server is kept per Room code in localStorage, so a
 // refresh or a dropped connection puts the player back in their Seat.
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ClientMessage, PlayerId, RoomView, ServerMessage, WireError } from "@perudo/server/protocol";
+import {
+  CLOSE_KICKED,
+  CLOSE_LEFT,
+  CLOSE_REPLACED,
+  type ClientMessage,
+  type PlayerId,
+  type RoomView,
+  type ServerMessage,
+  type WireError,
+} from "@perudo/server/protocol";
 import { hostKeys, reconnectTokens as tokens } from "./roomStorage.ts";
 
-/** WebSocket close code the server uses when a newer connection (another tab) took this Seat. */
-const REPLACED = 4000;
-/** Close codes when this player left the Room or the Host kicked them: their Seat is gone. */
-const LEFT = 4001;
-const KICKED = 4002;
 const RETRY_MS = 1000;
 
 export type ConnectionStatus =
@@ -93,12 +97,12 @@ export function useRoom(code: string): RoomConnection {
       ws.onclose = (event) => {
         if (disposed || socket.current !== ws) return; // replaced by a newer socket, or unmounted
         socket.current = null;
-        if (event.code === REPLACED) return setStatus("replaced");
-        if (event.code === LEFT || event.code === KICKED) {
+        if (event.code === CLOSE_REPLACED) return setStatus("replaced");
+        if (event.code === CLOSE_LEFT || event.code === CLOSE_KICKED) {
           tokens.forget(code);
           setView(null);
           setPlayerId(null);
-          return setStatus(event.code === LEFT ? "left" : "kicked");
+          return setStatus(event.code === CLOSE_LEFT ? "left" : "kicked");
         }
         const token = tokens.load(code);
         if (!token) return setStatus("idle");

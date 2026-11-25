@@ -11,6 +11,7 @@ describe("server configuration", () => {
     expect(config.port).toBe(3000);
     expect(config.rng).toBe(secureRng);
     expect(config.newRoomRng()).toBe(secureRng);
+    expect(config.testMode).toBe(false);
   });
 
   it("reads the port", () => {
@@ -27,6 +28,7 @@ describe("server configuration", () => {
     expect(a.every((n) => Number.isInteger(n) && n >= 0 && n < 6)).toBe(true);
     expect(new Set(a).size).toBeGreaterThan(1);
     expect(draw(second)).toEqual(a);
+    expect(config.testMode).toBe(true);
     expect(draw(loadConfig({ PERUDO_TEST_MODE: "1", PERUDO_RNG_SEED: "43" }).newRoomRng())).not.toEqual(a);
   });
 

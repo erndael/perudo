@@ -4,7 +4,14 @@ import type { Clock, Rng } from "../deps.ts";
 import { handlers, type RoomCommand } from "./commands/index.ts";
 import { passHostIfAway } from "./host.ts";
 import { isEmpty } from "./occupancy.ts";
-import { reject, type CommandResult, type PlayerId, type RoomState, type RoomView } from "./types.ts";
+import {
+  reject,
+  type CommandResult,
+  type PlayerId,
+  type RoomContext,
+  type RoomState,
+  type RoomView,
+} from "./types.ts";
 import { viewFor } from "./view.ts";
 
 export type { RoomCommand } from "./commands/index.ts";
@@ -53,7 +60,7 @@ export function createRoom(opts: { code: string; rng: Rng; clock: Clock; newToke
     game: null,
     departed: [],
   };
-  const ctx = { rng: opts.rng, clock: opts.clock, newToken: opts.newToken };
+  const ctx: RoomContext = { rng: opts.rng, clock: opts.clock, newToken: opts.newToken };
   let emptySince: number | null = opts.clock();
 
   const views = () => new Map(state.people.filter((p) => p.connected).map((p) => [p.id, viewFor(state, p.id)]));
@@ -67,7 +74,7 @@ export function createRoom(opts: { code: string; rng: Rng; clock: Clock; newToke
     emptySince: () => emptySince,
     dispatch(command) {
       const handler = Object.hasOwn(handlers, command?.type)
-        ? (handlers[command.type] as (s: RoomState, c: RoomCommand, x: typeof ctx) => CommandResult)
+        ? (handlers[command.type] as (state: RoomState, command: RoomCommand, context: RoomContext) => CommandResult)
         : undefined;
       // Time-based rules run before the command (time has passed, whatever the command is)
       // and after it (the command may have made someone eligible, e.g. a reconnect).
