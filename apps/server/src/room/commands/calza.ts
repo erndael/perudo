@@ -11,7 +11,6 @@ export interface CalzaCommand {
 export function calza(state: RoomState, command: CalzaCommand): CommandResult {
   const turn = checkTurn(state, command.by);
   if (!turn.ok) return turn;
-  if (!state.calzaEnabled) return reject("calza-disabled", "Calza is switched off in this Room.");
   if (!calzaAllowed(turn.game)) {
     return reject("calza-unavailable", "Calza isn't allowed in a Palifico Round or with only 2 players left.");
   }

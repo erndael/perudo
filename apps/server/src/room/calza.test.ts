@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Face } from "@perudo/engine";
 import type { Rng } from "../deps.ts";
 import type { PlayerId, Room } from "./index.ts";
-import { joinAs, newRoom, rolls, scriptedRng } from "./test-helpers.ts";
+import { joinAs, newRoom, rolls } from "./test-helpers.ts";
 
 /** An RNG fed as the test goes (each Round's dice are only known once the previous one ends). */
 function feedableRng(): Rng & { feed(...values: number[]): void } {
@@ -274,80 +274,18 @@ describe("when Calza is unavailable", () => {
   });
 });
 
-describe("the Calza option", () => {
-  it("is on by default, for everyone", () => {
-    const room = newRoom();
-    joinAs(room, "Ana");
-    joinAs(room, "Ben");
-
-    for (const view of room.views().values()) expect(view.calzaEnabled).toBe(true);
-  });
-
-  it("lets the Host switch Calza off and on again before a Game, for everyone to see", () => {
+describe("Calza is always on", () => {
+  it("has no option to switch it off", () => {
     const room = newRoom();
     const ana = joinAs(room, "Ana");
     joinAs(room, "Ben");
-
-    const off = room.dispatch({ type: "set-calza", by: ana, enabled: false });
-
-    expect(off.result).toEqual({ ok: true });
-    for (const view of off.views.values()) expect(view.calzaEnabled).toBe(false);
-    const on = room.dispatch({ type: "set-calza", by: ana, enabled: true });
-    for (const view of on.views.values()) expect(view.calzaEnabled).toBe(true);
-  });
-
-  it("is only for the Host", () => {
-    const room = newRoom();
-    joinAs(room, "Ana");
-    const ben = joinAs(room, "Ben");
     const before = room.views();
 
-    const { result, views } = room.dispatch({ type: "set-calza", by: ben, enabled: false });
+    const { result, views } = room.dispatch({ type: "set-calza", by: ana, enabled: false } as never);
 
-    expect(result).toMatchObject({ ok: false, error: { code: "not-host" } });
+    expect(result).toMatchObject({ ok: false, error: { code: "unknown-command" } });
     expect(views).toEqual(before);
-  });
-
-  it("rejects anything but on or off", () => {
-    const room = newRoom();
-    const ana = joinAs(room, "Ana");
-    const before = room.views();
-
-    const { result, views } = room.dispatch({ type: "set-calza", by: ana, enabled: "no" as unknown as boolean });
-
-    expect(result).toMatchObject({ ok: false, error: { code: "invalid-option" } });
-    expect(views).toEqual(before);
-  });
-
-  it("can't change during a Game, but can once it is over", () => {
-    const t = table("Ana", "Ben");
-    const [ana, ben] = t.ids as [PlayerId, PlayerId];
-    const before = t.room.views();
-
-    const { result, views } = t.room.dispatch({ type: "set-calza", by: ana, enabled: false });
-
-    expect(result).toMatchObject({ ok: false, error: { code: "game-in-progress" } });
-    expect(views).toEqual(before);
-    for (let dice = 5; dice > 1; dice--) t.roundLostBy(ben);
-    t.loseADie(ben);
-    expect(t.game().phase).toBe("over");
-    expect(t.room.dispatch({ type: "set-calza", by: ana, enabled: false }).result).toEqual({ ok: true });
-  });
-
-  it("when off, rejects Calza and tells players it isn't available", () => {
-    const rng = scriptedRng(0, ...rolls(...Array<Face>(15).fill(2)));
-    const room = newRoom({ rng });
-    const [ana, ben] = ["Ana", "Ben", "Cat"].map((n) => joinAs(room, n)) as [PlayerId, PlayerId, PlayerId];
-    mustAccept(room, { type: "set-calza", by: ana, enabled: false });
-    mustAccept(room, { type: "start-game", by: ana });
-    mustAccept(room, { type: "bid", by: ana, count: 15, face: 2 });
-    const before = room.views();
-    expect(before.get(ben)?.game?.calzaAvailable).toBe(false);
-
-    const { result, views } = room.dispatch({ type: "calza", by: ben });
-
-    expect(result).toMatchObject({ ok: false, error: { code: "calza-disabled" } });
-    expect(views).toEqual(before);
+    for (const view of views.values()) expect(view).not.toHaveProperty("calzaEnabled");
   });
 });
 

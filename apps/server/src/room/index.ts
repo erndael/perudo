@@ -56,7 +56,6 @@ export function createRoom(opts: { code: string; rng: Rng; clock: Clock; newToke
     hostId: null,
     hostKey,
     nextPlayerNumber: 1,
-    calzaEnabled: true,
     game: null,
     departed: [],
   };
