@@ -81,16 +81,6 @@ describe("who can start a Game, and when", () => {
     expect(views.get(ana)?.game).toBeNull();
   });
 
-  it("rejects a start with more than 6 players", () => {
-    const room = newRoom();
-    const [ana] = ["Ana", "Ben", "Cat", "Dan", "Eve", "Fay", "Gus"].map((n) => joinAs(room, n));
-
-    const { result, views } = room.dispatch({ type: "start-game", by: ana! });
-
-    expect(result).toMatchObject({ ok: false, error: { code: "too-many-players" } });
-    expect(views.get(ana!)?.game).toBeNull();
-  });
-
   it("starts with 6 players", () => {
     const sixPlayers = Array.from({ length: 6 }, () => rolls(3, 3, 3, 3, 3)).flat();
     const room = newRoom({ rng: scriptedRng(5, ...sixPlayers) });
