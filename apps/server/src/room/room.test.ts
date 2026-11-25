@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { joinAs, newRoom } from "./test-helpers.ts";
 
 describe("joining a Room", () => {
-  it("makes the first person to join the Host", () => {
+  it("makes the first person to join the Host while the Room's creator hasn't joined", () => {
     const room = newRoom();
 
     const { result, views } = room.dispatch({ type: "join", nickname: "Ana" });
@@ -46,6 +46,50 @@ describe("joining a Room", () => {
     const room = newRoom();
     const ids = ["Ana", "Ben", "Cat"].map((n) => joinAs(room, n));
     expect(new Set(ids).size).toBe(3);
+  });
+});
+
+describe("the person who created the Room", () => {
+  it("becomes Host by joining with the Room's host key", () => {
+    const room = newRoom();
+
+    const { result, views } = room.dispatch({ type: "join", nickname: "Ana", hostKey: room.hostKey });
+
+    const ana = (result.ok && result.playerId) || "";
+    expect(views.get(ana)?.hostId).toBe(ana);
+  });
+
+  it("takes the Host role from whoever joined before them", () => {
+    const room = newRoom();
+    const ben = joinAs(room, "Ben");
+    const cat = joinAs(room, "Cat");
+
+    const { result, views } = room.dispatch({ type: "join", nickname: "Ana", hostKey: room.hostKey });
+
+    const ana = (result.ok && result.playerId) || "";
+    for (const viewer of [ana, ben, cat]) expect(views.get(viewer)?.hostId).toBe(ana);
+    expect(views.get(ana)?.people.map((p) => p.nickname)).toEqual(["Ben", "Cat", "Ana"]);
+  });
+
+  it("can use the host key only once", () => {
+    const room = newRoom();
+    const ana = room.dispatch({ type: "join", nickname: "Ana", hostKey: room.hostKey }).result;
+    if (!ana.ok || !ana.playerId) throw new Error("join failed");
+
+    const { views } = room.dispatch({ type: "join", nickname: "Ben", hostKey: room.hostKey });
+
+    for (const view of views.values()) expect(view.hostId).toBe(ana.playerId);
+  });
+
+  it("ignores a wrong host key", () => {
+    const room = newRoom();
+    const ben = joinAs(room, "Ben");
+
+    for (const hostKey of ["not-the-key", 42, null]) {
+      const { result, views } = room.dispatch({ type: "join", nickname: `Ana${String(hostKey).length}`, hostKey } as never);
+      expect(result).toMatchObject({ ok: true });
+      for (const view of views.values()) expect(view.hostId).toBe(ben);
+    }
   });
 });
 

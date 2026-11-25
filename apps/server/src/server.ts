@@ -60,7 +60,8 @@ export function startServer(opts: ServerOptions): Promise<Server> {
     const path = (req.url ?? "/").split("?")[0];
     if (req.method === "GET" && path === "/healthz") return void res.writeHead(200).end("ok");
     if (req.method === "POST" && path === "/api/rooms") {
-      const body: CreateRoomResponse = { code: registry.create().code };
+      const room = registry.create();
+      const body: CreateRoomResponse = { code: room.code, hostKey: room.hostKey };
       return void res.writeHead(201, { "content-type": "application/json" }).end(JSON.stringify(body));
     }
     const roomPath = /^\/api\/rooms\/([^/]+)$/.exec(path ?? "");

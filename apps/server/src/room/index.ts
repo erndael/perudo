@@ -28,6 +28,11 @@ export interface DispatchOutcome {
 
 export interface Room {
   readonly code: string;
+  /**
+   * Secret for whoever created the Room: joining with it makes them Host, taking the role from
+   * whoever joined first. Until it is used, the first person to join is Host. Single use.
+   */
+  readonly hostKey: string;
   /** Applies one command. Untrusted input is fine: unknown or malformed commands are rejected. */
   dispatch(command: RoomCommand): DispatchOutcome;
   /** The current view for every connected player, without changing anything. */
@@ -37,10 +42,12 @@ export interface Room {
 }
 
 export function createRoom(opts: { code: string; rng: Rng; clock: Clock; newToken: () => string }): Room {
+  const hostKey = opts.newToken();
   const state: RoomState = {
     code: opts.code,
     people: [],
     hostId: null,
+    hostKey,
     nextPlayerNumber: 1,
     calzaEnabled: true,
     game: null,
@@ -55,6 +62,7 @@ export function createRoom(opts: { code: string; rng: Rng; clock: Clock; newToke
 
   return {
     code: opts.code,
+    hostKey,
     views,
     emptySince: () => emptySince,
     dispatch(command) {

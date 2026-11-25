@@ -4,6 +4,7 @@
 // refresh or a dropped connection puts the player back in their Seat.
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ClientMessage, PlayerId, RoomView, ServerMessage, WireError } from "@perudo/server/protocol";
+import { hostKeys, reconnectTokens as tokens } from "./roomStorage.ts";
 
 /** WebSocket close code the server uses when a newer connection (another tab) took this Seat. */
 const REPLACED = 4000;
@@ -43,32 +44,6 @@ function socketUrl(): string {
   return `${scheme}://${window.location.host}/ws`;
 }
 
-// Storage can be unavailable (private mode, blocked site data): then refresh just asks for a nickname.
-const tokenKey = (code: string) => `perudo:reconnect-token:${code}`;
-const tokens = {
-  load(code: string): string | null {
-    try {
-      return window.localStorage.getItem(tokenKey(code));
-    } catch {
-      return null;
-    }
-  },
-  save(code: string, token: string) {
-    try {
-      window.localStorage.setItem(tokenKey(code), token);
-    } catch {
-      /* not remembered */
-    }
-  },
-  forget(code: string) {
-    try {
-      window.localStorage.removeItem(tokenKey(code));
-    } catch {
-      /* nothing to forget */
-    }
-  },
-};
-
 export function useRoom(code: string): RoomConnection {
   const socket = useRef<WebSocket | null>(null);
   const connect = useRef<(first: ClientMessage) => void>(() => {});
@@ -95,6 +70,8 @@ export function useRoom(code: string): RoomConnection {
         if (message.type === "joined") {
           seated = true;
           tokens.save(code, message.reconnectToken);
+          // Single use: the server has made this browser Host (or someone already used the key).
+          if (first.type === "join") hostKeys.forget(code);
           setPlayerId(message.playerId);
           setStatus("connected");
         }
@@ -146,7 +123,10 @@ export function useRoom(code: string): RoomConnection {
     socket.current?.send(JSON.stringify(message));
   }, []);
 
-  const join = useCallback((nickname: string) => connect.current({ type: "join", code, nickname }), [code]);
+  const join = useCallback(
+    (nickname: string) => connect.current({ type: "join", code, nickname, hostKey: hostKeys.load(code) ?? undefined }),
+    [code],
+  );
 
   const leave = useCallback(() => send({ type: "leave" }), [send]);
 

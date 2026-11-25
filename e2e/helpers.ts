@@ -9,10 +9,16 @@ export async function newPlayer(browser: Browser): Promise<Page> {
 
 /** Creates a Room from the home page and joins it with `nickname`. Returns the Room link. */
 export async function createRoom(page: Page, nickname: string): Promise<string> {
+  const link = await openNewRoom(page);
+  await enterNickname(page, nickname);
+  return link;
+}
+
+/** Creates a Room from the home page, stopping at its nickname form (not joined yet). Returns the Room link. */
+export async function openNewRoom(page: Page): Promise<string> {
   await page.goto("/");
   await page.getByRole("button", { name: "Create a Room" }).click();
   await expect(page).toHaveURL(/\/r\/[A-Z0-9]{6}$/);
-  await enterNickname(page, nickname);
   return page.url();
 }
 

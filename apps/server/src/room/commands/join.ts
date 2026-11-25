@@ -4,6 +4,8 @@ import { reject, type CommandResult, type RoomContext, type RoomState } from "..
 export interface JoinCommand {
   type: "join";
   nickname: string;
+  /** The Room's host key, presented by whoever created the Room (see `Room.hostKey`). */
+  hostKey?: string;
 }
 
 /** Everyone in the Room counts, including people waiting for the next Game. */
@@ -34,6 +36,11 @@ export function join(state: RoomState, command: JoinCommand, ctx: RoomContext): 
   const id = `p${state.nextPlayerNumber++}`;
   const reconnectToken = ctx.newToken();
   state.people.push({ id, nickname, reconnectToken, connected: true, disconnectedAt: null });
-  state.hostId ??= id;
+  if (state.hostKey !== null && command.hostKey === state.hostKey) {
+    state.hostId = id;
+    state.hostKey = null;
+  } else {
+    state.hostId ??= id;
+  }
   return { ok: true, playerId: id, reconnectToken };
 }

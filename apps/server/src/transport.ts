@@ -73,7 +73,7 @@ export function attachTransport(wss: WebSocketServer, registry: Registry): void 
         if (!room) return sendError(ws, ROOM_NOT_FOUND);
         const { result, views } = room.dispatch(
           message.type === "join"
-            ? { type: "join", nickname: message.nickname }
+            ? { type: "join", nickname: message.nickname, hostKey: message.hostKey }
             : { type: "reconnect", token: message.token },
         );
         if (!result.ok) return sendError(ws, result.error);

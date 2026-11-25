@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CreateRoomResponse } from "@perudo/server/protocol";
+import { hostKeys } from "./room/roomStorage.ts";
 import { navigate } from "./router.ts";
 
 export function HomePage() {
@@ -12,7 +13,8 @@ export function HomePage() {
     try {
       const res = await fetch("/api/rooms", { method: "POST" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const { code } = (await res.json()) as CreateRoomResponse;
+      const { code, hostKey } = (await res.json()) as CreateRoomResponse;
+      hostKeys.save(code, hostKey);
       navigate(`/r/${code}`);
     } catch {
       setError("Couldn't create a Room. Please try again.");

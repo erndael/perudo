@@ -15,7 +15,7 @@ export type TransportCommandType = "join" | "reconnect" | "disconnect" | "tick";
  * without `by`; the transport fills `by` with the connection's player id.
  */
 export type ClientMessage =
-  | { type: "join"; code: string; nickname: string }
+  | { type: "join"; code: string; nickname: string; hostKey?: string }
   | { type: "reconnect"; code: string; token: string }
   | DistributiveOmit<Exclude<RoomCommand, { type: TransportCommandType }>, "by">;
 
@@ -37,6 +37,8 @@ export type ServerMessage =
 /** HTTP: POST /api/rooms -> CreateRoomResponse */
 export interface CreateRoomResponse {
   code: string;
+  /** Present it on the creator's `join` to become Host (see `Room.hostKey`). Keep it secret. */
+  hostKey: string;
 }
 
 /** HTTP: GET /api/rooms/<code> -> 200 RoomExistsResponse, or 404 with `ROOM_NOT_FOUND` (unknown or expired). */

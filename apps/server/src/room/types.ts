@@ -20,6 +20,11 @@ export interface RoomState {
   /** In Seat order, which is join order. */
   people: Person[];
   hostId: PlayerId | null;
+  /**
+   * Secret handed to whoever created the Room (see `Room.hostKey`). Joining with it makes that
+   * person Host, even if others joined first. Single use: null once presented.
+   */
+  hostKey: string | null;
   nextPlayerNumber: number;
   /** The Room's Calza option (on by default). The Host changes it between Games only. */
   calzaEnabled: boolean;
