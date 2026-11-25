@@ -6,8 +6,10 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { WebSocketServer } from "ws";
 import type { Clock, Rng } from "./deps.ts";
-import type { CreateRoomResponse } from "./protocol.ts";
+import { ROOM_NOT_FOUND, type CreateRoomResponse, type RoomExistsResponse } from "./protocol.ts";
 import { createRegistry } from "./registry.ts";
+
+const SWEEP_INTERVAL_MS = 60_000;
 import { attachTransport } from "./transport.ts";
 
 const MIME: Record<string, string> = {
@@ -61,6 +63,13 @@ export function startServer(opts: ServerOptions): Promise<Server> {
       const body: CreateRoomResponse = { code: registry.create().code };
       return void res.writeHead(201, { "content-type": "application/json" }).end(JSON.stringify(body));
     }
+    const roomPath = /^\/api\/rooms\/([^/]+)$/.exec(path ?? "");
+    if (req.method === "GET" && roomPath) {
+      const room = registry.get(decodeURIComponent(roomPath[1]!));
+      if (!room) return void res.writeHead(404, { "content-type": "application/json" }).end(JSON.stringify(ROOM_NOT_FOUND));
+      const body: RoomExistsResponse = { code: room.code };
+      return void res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(body));
+    }
     if (req.method === "GET" || req.method === "HEAD") {
       return void serveStatic(req, res).catch(() => res.writeHead(500).end());
     }
@@ -68,6 +77,11 @@ export function startServer(opts: ServerOptions): Promise<Server> {
   });
 
   attachTransport(new WebSocketServer({ server, path: "/ws" }), registry);
+
+  // `registry.get` already hides expired Rooms; the sweep frees the memory of ones nobody asks for.
+  const sweeper = setInterval(() => registry.sweep(), SWEEP_INTERVAL_MS);
+  sweeper.unref();
+  server.on("close", () => clearInterval(sweeper));
 
   return new Promise((ok) => server.listen(opts.port, () => ok(server)));
 }

@@ -32,3 +32,14 @@ export type ServerMessage =
 export interface CreateRoomResponse {
   code: string;
 }
+
+/** HTTP: GET /api/rooms/<code> -> 200 RoomExistsResponse, or 404 with `ROOM_NOT_FOUND` (unknown or expired). */
+export interface RoomExistsResponse {
+  code: string;
+}
+
+/** Sent for a Room code that was never created or whose Room has expired. */
+export const ROOM_NOT_FOUND: WireError = {
+  code: "room-not-found",
+  message: "This Room doesn't exist or has expired.",
+};

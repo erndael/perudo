@@ -1,7 +1,7 @@
 // Thin `ws` adapter: translates messages into Room commands and sends every
 // connected player their latest full view after each command. No game rules here.
 import type { WebSocket, WebSocketServer } from "ws";
-import type { ClientMessage, ServerMessage, WireError } from "./protocol.ts";
+import { ROOM_NOT_FOUND, type ClientMessage, type ServerMessage, type WireError } from "./protocol.ts";
 import type { Registry } from "./registry.ts";
 import type { PlayerId, Room, RoomCommand, RoomView } from "./room/index.ts";
 
@@ -39,7 +39,7 @@ export function attachTransport(wss: WebSocketServer, registry: Registry): void 
       if (message.type === "join") {
         if (bound) return sendError(ws, { code: "already-joined", message: "You are already in a Room." });
         const room = registry.get(String(message.code));
-        if (!room) return sendError(ws, { code: "room-not-found", message: "This Room doesn't exist." });
+        if (!room) return sendError(ws, ROOM_NOT_FOUND);
         const { result, views } = room.dispatch({ type: "join", nickname: message.nickname });
         if (!result.ok) return sendError(ws, result.error);
         if (!result.playerId) throw new Error("join succeeded without a player id");
@@ -61,6 +61,7 @@ export function attachTransport(wss: WebSocketServer, registry: Registry): void 
       if (!bound) return;
       const inRoom = sockets.get(bound.room.code);
       if (inRoom?.get(bound.playerId) === ws) inRoom.delete(bound.playerId);
+      if (inRoom?.size === 0) sockets.delete(bound.room.code);
     });
   });
 }

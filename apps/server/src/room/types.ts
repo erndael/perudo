@@ -33,6 +33,8 @@ export type RoomErrorCode =
   | "game-in-progress"
   | "not-enough-players"
   | "too-many-players"
+  | "room-full"
+  | "nickname-taken"
   | "no-game"
   | "not-your-turn"
   | "illegal-bid";
@@ -57,7 +59,12 @@ export interface RoomView {
   you: PlayerId;
   hostId: PlayerId | null;
   /** In Seat order. */
-  people: { id: PlayerId; nickname: string }[];
+  people: {
+    id: PlayerId;
+    nickname: string;
+    /** Arrived while a Game was in progress: not playing it, joins the next Game. */
+    waiting: boolean;
+  }[];
   /** The Game in progress, or null before the first Game. */
   game: GameView | null;
 }
