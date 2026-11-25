@@ -69,7 +69,7 @@ label {
 }
 
 /* The 3D dice sit in a fixed backdrop at the bottom of the viewport, behind the page; the HTML layer
-   stays on top and clickable, and the Game panel leaves room below it so text can scroll clear of the dice. */
+   stays on top and clickable, and the page leaves room below its last panel so text can scroll clear of the dice. */
 .dice-stage {
   position: fixed;
   inset: auto 0 0;
@@ -83,7 +83,7 @@ label {
   z-index: 1;
 }
 
-.game {
+.page:has(.dice-stage) {
   padding-bottom: var(--dice-stage-height);
 }
 
