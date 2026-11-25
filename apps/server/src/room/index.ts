@@ -6,7 +6,7 @@ import { reject, type CommandResult, type PlayerId, type RoomState, type RoomVie
 import { viewFor } from "./view.ts";
 
 export type { RoomCommand } from "./commands/index.ts";
-export type { CommandResult, PlayerId, RoomError, RoomErrorCode, RoomView } from "./types.ts";
+export type { CommandResult, GameView, PlayerId, RoomError, RoomErrorCode, RoomView } from "./types.ts";
 
 export interface DispatchOutcome {
   result: CommandResult;
@@ -23,7 +23,7 @@ export interface Room {
 }
 
 export function createRoom(opts: { code: string; rng: Rng; clock: Clock }): Room {
-  const state: RoomState = { code: opts.code, people: [], hostId: null, nextPlayerNumber: 1 };
+  const state: RoomState = { code: opts.code, people: [], hostId: null, nextPlayerNumber: 1, game: null };
   const ctx = { rng: opts.rng, clock: opts.clock };
 
   const views = () => new Map(state.people.map((p) => [p.id, viewFor(state, p.id)]));

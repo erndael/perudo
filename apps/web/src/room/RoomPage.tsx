@@ -1,9 +1,11 @@
+import { GamePanel } from "./GamePanel.tsx";
+import { HostControls } from "./HostControls.tsx";
 import { NicknameForm } from "./NicknameForm.tsx";
 import { PeopleList } from "./PeopleList.tsx";
 import { useRoom } from "./useRoom.ts";
 
 export function RoomPage({ code }: { code: string }) {
-  const { view, error, join } = useRoom(code);
+  const { view, error, join, send } = useRoom(code);
 
   if (!view) {
     return (
@@ -21,6 +23,8 @@ export function RoomPage({ code }: { code: string }) {
         Share this link: <code>{window.location.href}</code>
       </p>
       <PeopleList view={view} />
+      <HostControls view={view} send={send} />
+      {view.game && <GamePanel game={view.game} />}
       {error && <p role="alert">{error.message}</p>}
     </main>
   );

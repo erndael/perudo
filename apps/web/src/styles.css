@@ -19,6 +19,32 @@ body {
   opacity: 0.75;
 }
 
+.people .die-count {
+  margin-left: 0.5rem;
+}
+
+.dice {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.die {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid currentColor;
+  border-radius: 0.4rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.hint {
+  opacity: 0.75;
+}
+
 label {
   display: inline-flex;
   gap: 0.5rem;

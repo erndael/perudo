@@ -2,7 +2,7 @@
 // The web app imports these types (type-only) via "@perudo/server/protocol".
 import type { PlayerId, RoomCommand, RoomError, RoomView } from "./room/index.ts";
 
-export type { PlayerId, RoomView } from "./room/index.ts";
+export type { GameView, PlayerId, RoomView } from "./room/index.ts";
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 

@@ -27,7 +27,17 @@ export async function enterNickname(page: Page, nickname: string): Promise<void>
   await page.getByRole("button", { name: "Join" }).click();
 }
 
-/** The people list items, in Seat order. Each reads like "Ana Host You". */
+/** The people list items, in Seat order. Each reads like "Ana Host You", plus "Opener" and "5 dice" during a Game. */
 export function people(page: Page) {
   return page.getByRole("list", { name: "People" }).getByRole("listitem");
+}
+
+/** The viewer's own dice, one item per die, each the Face as text ("1".."6"). */
+export function yourDice(page: Page) {
+  return page.getByRole("list", { name: "Your dice" }).getByRole("listitem");
+}
+
+/** The Host starts a Game from the Room page. */
+export async function startGame(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Start Game" }).click();
 }

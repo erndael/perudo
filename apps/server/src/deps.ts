@@ -1,9 +1,9 @@
 // Injected nondeterminism. The Room module and registry never touch Math.random,
 // crypto or Date directly; they receive these instead.
 import { randomInt } from "node:crypto";
+import type { Rng } from "@perudo/engine";
 
-/** Returns a uniformly random integer in [0, maxExclusive). */
-export type Rng = (maxExclusive: number) => number;
+export type { Rng } from "@perudo/engine";
 
 /** Returns the current time in milliseconds. */
 export type Clock = () => number;

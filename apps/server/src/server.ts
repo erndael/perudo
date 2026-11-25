@@ -29,10 +29,12 @@ export interface ServerOptions {
   webRoot: string;
   rng: Rng;
   clock: Clock;
+  /** Per-Room dice RNG; defaults to `rng`. See config.ts. */
+  newRoomRng?: () => Rng;
 }
 
 export function startServer(opts: ServerOptions): Promise<Server> {
-  const registry = createRegistry({ rng: opts.rng, clock: opts.clock });
+  const registry = createRegistry({ rng: opts.rng, clock: opts.clock, newRoomRng: opts.newRoomRng });
   const webRoot = resolve(opts.webRoot);
 
   const serveFile = async (res: ServerResponse, path: string) => {

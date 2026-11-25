@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createRegistry } from "./registry.ts";
-import { fakeClock, joinAs } from "./room/test-helpers.ts";
+import { fakeClock, joinAs, rolls, scriptedRng } from "./room/test-helpers.ts";
 import { secureRng } from "./deps.ts";
 
 describe("Room registry", () => {
@@ -20,6 +20,21 @@ describe("Room registry", () => {
     const registry = createRegistry({ rng: secureRng, clock: fakeClock() });
     registry.create();
     expect(registry.get("NOPE00")).toBeUndefined();
+  });
+
+  it("rolls each Room's dice with the RNG it gets from newRoomRng", () => {
+    const registry = createRegistry({
+      rng: secureRng,
+      clock: fakeClock(),
+      newRoomRng: () => scriptedRng(1, ...rolls(6, 6, 6, 6, 6), ...rolls(2, 2, 2, 2, 2)),
+    });
+
+    for (const room of [registry.create(), registry.create()]) {
+      const ana = joinAs(room, "Ana");
+      const ben = joinAs(room, "Ben");
+      const { views } = room.dispatch({ type: "start-game", by: ana });
+      expect(views.get(ana)?.game).toMatchObject({ opener: ben, yourDice: [6, 6, 6, 6, 6] });
+    }
   });
 
   it("gives every Room its own code", () => {

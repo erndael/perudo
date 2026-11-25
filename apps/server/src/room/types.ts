@@ -1,3 +1,4 @@
+import type { Face, Game } from "@perudo/engine";
 import type { Clock, Rng } from "../deps.ts";
 
 export type PlayerId = string;
@@ -15,6 +16,8 @@ export interface RoomState {
   people: Person[];
   hostId: PlayerId | null;
   nextPlayerNumber: number;
+  /** The Game in progress, if any. Holds every player's dice: never copy it into a view wholesale. */
+  game: Game | null;
 }
 
 /** What command handlers get besides the state and the command. */
@@ -23,7 +26,13 @@ export interface RoomContext {
   clock: Clock;
 }
 
-export type RoomErrorCode = "unknown-command" | "invalid-nickname";
+export type RoomErrorCode =
+  | "unknown-command"
+  | "invalid-nickname"
+  | "not-host"
+  | "game-in-progress"
+  | "not-enough-players"
+  | "too-many-players";
 
 export interface RoomError {
   code: RoomErrorCode;
@@ -46,4 +55,20 @@ export interface RoomView {
   hostId: PlayerId | null;
   /** In Seat order. */
   people: { id: PlayerId; nickname: string }[];
+  /** The Game in progress, or null before the first Game. */
+  game: GameView | null;
+}
+
+/** What one player may see of the Game. Never contains another player's dice outside a reveal. */
+export interface GameView {
+  /** Round number within the Game, from 1. Changes whenever dice are re-rolled. */
+  round: number;
+  /** Who makes the first Bid of this Round. */
+  opener: PlayerId;
+  /** Sum of every player's die count. */
+  totalDice: number;
+  /** Everyone playing this Game, in Seat order. Die counts only: dice stay secret. */
+  players: { id: PlayerId; dieCount: number }[];
+  /** The viewer's own dice this Round; null if the viewer isn't playing in this Game. */
+  yourDice: Face[] | null;
 }

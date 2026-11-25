@@ -18,7 +18,8 @@ export default defineConfig({
   webServer: {
     command: "pnpm build && pnpm --filter @perudo/server start",
     url: `http://localhost:${port}/healthz`,
-    env: { PORT: String(port) },
+    // Seeded dice: every Room's first Game rolls the same dice (see apps/server/src/config.ts).
+    env: { PORT: String(port), PERUDO_TEST_MODE: "1", PERUDO_RNG_SEED: "42" },
     reuseExistingServer: false,
     timeout: 120_000,
     stdout: "pipe",

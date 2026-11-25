@@ -12,7 +12,16 @@ export interface Registry {
   get(code: string): Room | undefined;
 }
 
-export function createRegistry(deps: { rng: Rng; clock: Clock }): Registry {
+export interface RegistryDeps {
+  /** For Room codes; also each Room's RNG unless `newRoomRng` is given. */
+  rng: Rng;
+  clock: Clock;
+  /** Called once per new Room for the RNG that rolls its dice (seeded per Room in test mode). */
+  newRoomRng?: () => Rng;
+}
+
+export function createRegistry(deps: RegistryDeps): Registry {
+  const newRoomRng = deps.newRoomRng ?? (() => deps.rng);
   const rooms = new Map<string, Room>();
 
   const newCode = () => {
@@ -25,7 +34,7 @@ export function createRegistry(deps: { rng: Rng; clock: Clock }): Registry {
 
   return {
     create() {
-      const room = createRoom({ code: newCode(), rng: deps.rng, clock: deps.clock });
+      const room = createRoom({ code: newCode(), rng: newRoomRng(), clock: deps.clock });
       rooms.set(room.code, room);
       return room;
     },

@@ -1,5 +1,6 @@
 // Helpers for tests at the Room seam: commands in, per-player views out.
 import { createRoom, type PlayerId, type Room } from "./index.ts";
+import type { Face } from "@perudo/engine";
 import type { Clock, Rng } from "../deps.ts";
 
 /** A clock that only moves when the test says so. */
@@ -26,6 +27,15 @@ export function scriptedRng(...values: number[]): Rng {
     }
     return next;
   };
+}
+
+/**
+ * Scripted RNG values that make the server roll exactly these Faces, one `rng(6)` call
+ * per die. Use inside `scriptedRng(...)`, e.g. for a 2-player Game start:
+ * `scriptedRng(openerSeat, ...rolls(2, 3, 4, 5, 6), ...rolls(1, 1, 2, 6, 6))`.
+ */
+export function rolls(...faces: Face[]): number[] {
+  return faces.map((face) => face - 1);
 }
 
 export function newRoom(opts: { code?: string; rng?: Rng; clock?: Clock } = {}): Room {

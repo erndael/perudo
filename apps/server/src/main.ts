@@ -1,11 +1,12 @@
-// Entry point: reads configuration from the environment and starts the server.
-//   PORT  (default 3000)
+// Entry point: reads configuration from the environment (see config.ts) and starts the server.
 import { fileURLToPath } from "node:url";
-import { secureRng, systemClock } from "./deps.ts";
+import { loadConfig } from "./config.ts";
+import { systemClock } from "./deps.ts";
 import { startServer } from "./server.ts";
 
-const port = Number(process.env.PORT ?? 3000);
+const config = loadConfig(process.env);
 const webRoot = fileURLToPath(new URL("../../web/dist", import.meta.url));
 
-await startServer({ port, webRoot, rng: secureRng, clock: systemClock });
-console.log(`Perudo listening on http://localhost:${port}`);
+await startServer({ ...config, webRoot, clock: systemClock });
+console.log(`Perudo listening on http://localhost:${config.port}`);
+if (process.env.PERUDO_RNG_SEED !== undefined) console.log("TEST MODE: dice are seeded, not secure.");
