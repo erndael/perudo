@@ -8,6 +8,8 @@ const serverPort = process.env.PORT ?? "3000";
 
 export default defineConfig({
   plugins: [react()],
+  // The lazily loaded 3D chunk (three.js + rapier, whose WASM is inlined as base64) is ~3 MB by design.
+  build: { chunkSizeWarningLimit: 4000 },
   server: {
     proxy: {
       "/api": `http://localhost:${serverPort}`,
