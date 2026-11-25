@@ -1,7 +1,10 @@
 import type { Face } from "@perudo/engine";
 import { Component, lazy, Suspense, useState, type ReactNode } from "react";
 
+import type { RevealScenePlayer } from "./RevealScene.tsx";
+
 const ThrowScene = lazy(() => import("./ThrowScene.tsx"));
+const RevealScene = lazy(() => import("./RevealScene.tsx"));
 
 /** Whether this browser can render WebGL at all (checked once). */
 export const webglAvailable: boolean = (() => {
@@ -28,6 +31,17 @@ export function YourDice3D({ faces, throwKey, onFail }: { faces: readonly Face[]
     <SceneBoundary onFail={onFail}>
       <Suspense fallback={null}>
         <ThrowScene faces={faces} throwKey={throwKey} />
+      </Suspense>
+    </SceneBoundary>
+  );
+}
+
+/** Every player's dice laid out in 3D at the end of a Round, counting dice (as marked by the server) highlighted. */
+export function Reveal3D({ players, onFail }: { players: readonly RevealScenePlayer[]; onFail: () => void }) {
+  return (
+    <SceneBoundary onFail={onFail}>
+      <Suspense fallback={null}>
+        <RevealScene players={players} />
       </Suspense>
     </SceneBoundary>
   );

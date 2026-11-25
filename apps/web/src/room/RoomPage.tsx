@@ -1,3 +1,4 @@
+import { use3D } from "../dice/Dice3D.tsx";
 import { BiddingPanel } from "./BiddingPanel.tsx";
 import { GamePanel } from "./GamePanel.tsx";
 import { HostControls } from "./HostControls.tsx";
@@ -5,6 +6,7 @@ import { NicknameForm } from "./NicknameForm.tsx";
 import { PeopleList } from "./PeopleList.tsx";
 import { RevealPanel } from "./RevealPanel.tsx";
 import { RoomNotFound } from "./RoomNotFound.tsx";
+import type { RoomView } from "@perudo/server/protocol";
 import { useRoom, type ConnectionStatus } from "./useRoom.ts";
 import { useRoomExists } from "./useRoomExists.ts";
 
@@ -16,6 +18,8 @@ const STATUS_TEXT: Partial<Record<ConnectionStatus, string>> = {
 export function RoomPage({ code }: { code: string }) {
   const existence = useRoomExists(code);
   const { view, status, error, join, send } = useRoom(code);
+  // Shared by the Game and the reveal: while the 3D dice run, the HTML dice lists are only visually hidden.
+  const [threeD, fail3D] = use3D();
 
   if (existence.state === "missing") return <RoomNotFound message={existence.message} />;
   // The Room can expire between opening the link and joining.
@@ -43,10 +47,14 @@ export function RoomPage({ code }: { code: string }) {
       </p>
       <PeopleList view={view} />
       <HostControls view={view} send={send} />
-      {view.game && <GamePanel game={view.game} />}
-      <RevealPanel view={view} />
+      {view.game && <GamePanel game={view.game} nickname={nickname(view)} threeD={threeD} onFail3D={fail3D} />}
+      <RevealPanel view={view} diceIn3D={threeD} />
       <BiddingPanel view={view} send={send} />
       {error && <p role="alert">{error.message}</p>}
     </main>
   );
+}
+
+function nickname(view: RoomView) {
+  return (id: string) => view.people.find((p) => p.id === id)?.nickname ?? "?";
 }

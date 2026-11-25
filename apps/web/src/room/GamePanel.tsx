@@ -1,9 +1,19 @@
 import type { GameView } from "@perudo/server/protocol";
-import { use3D, YourDice3D } from "../dice/Dice3D.tsx";
+import { Reveal3D, YourDice3D } from "../dice/Dice3D.tsx";
 
-/** The Game in progress: Round, total dice in play and the viewer's own dice (thrown in 3D). */
-export function GamePanel({ game }: { game: GameView }) {
-  const [threeD, fail3D] = use3D();
+interface GamePanelProps {
+  game: GameView;
+  nickname: (id: string) => string;
+  /** Whether the 3D dice are running (see `use3D`); `onFail3D` switches back to the HTML dice. */
+  threeD: boolean;
+  onFail3D: () => void;
+}
+
+/**
+ * The Game in progress: Round, total dice in play and the viewer's own dice (thrown in 3D).
+ * At the end of a Round the 3D view shows every player's dice instead (the reveal), until the next Round's throw.
+ */
+export function GamePanel({ game, nickname, threeD, onFail3D }: GamePanelProps) {
   return (
     <section className="game">
       <h2>Round {game.round}</h2>
@@ -19,13 +29,22 @@ export function GamePanel({ game }: { game: GameView }) {
               </li>
             ))}
           </ol>
-          {threeD && (
-            <YourDice3D faces={game.yourDice} throwKey={`${game.round}:${game.yourDice.join("")}`} onFail={fail3D} />
-          )}
         </>
       ) : (
         <p>You'll join the next Game.</p>
       )}
+      {/* One 3D scene at a time: the reveal while the Round is over, otherwise the viewer's own throw. */}
+      {threeD &&
+        (game.reveal ? (
+          <Reveal3D
+            players={game.reveal.players.map((p) => ({ ...p, nickname: nickname(p.id) }))}
+            onFail={onFail3D}
+          />
+        ) : (
+          game.yourDice && (
+            <YourDice3D faces={game.yourDice} throwKey={`${game.round}:${game.yourDice.join("")}`} onFail={onFail3D} />
+          )
+        ))}
     </section>
   );
 }
