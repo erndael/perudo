@@ -51,3 +51,18 @@ label {
   align-items: center;
   margin-right: 0.5rem;
 }
+
+.bidding .turn {
+  font-weight: bold;
+}
+
+.bid-controls .faces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.bid-controls input {
+  width: 4rem;
+}

@@ -18,6 +18,9 @@ function gameViewFor(game: Game, viewer: PlayerId): GameView {
   return {
     round: game.round.number,
     opener: game.round.opener,
+    turn: game.round.turn,
+    bids: game.round.bids.map(({ by, count, face }) => ({ by, count, face })),
+    palifico: game.round.palifico,
     totalDice: totalDice(game),
     players: game.players.map((p) => ({ id: p.id, dieCount: p.dice.length })),
     yourDice: you ? [...you.dice] : null,
